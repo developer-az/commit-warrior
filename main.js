@@ -33,14 +33,16 @@ let isQuitting = false;
 // Create the app window
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 400,
-    height: 300,
+    width: 600,
+    height: 500,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true
     },
     show: false,
-    resizable: false
+    resizable: true,
+    minWidth: 500,
+    minHeight: 400
   });
 
   mainWindow.loadFile('index.html');
@@ -105,11 +107,20 @@ function updateTray(hasCommittedToday) {
   const iconName = hasCommittedToday ? 'committed.png' : 'not-committed.png';
   const iconPath = path.join(__dirname, 'assets', iconName);
   
+  if (!fs.existsSync(iconPath)) {
+    console.error(`Tray icon not found at: ${iconPath}`);
+    return;
+  }
+  
   if (tray) {
-    tray.setImage(iconPath);
-    tray.setToolTip(hasCommittedToday ? 
-      'You made a commit today! 🎉' : 
-      'No commits yet today');
+    try {
+      tray.setImage(iconPath);
+      tray.setToolTip(hasCommittedToday ? 
+        'You made a commit today! 🎉' : 
+        'No commits yet today');
+    } catch (error) {
+      console.error(`Error updating tray icon: ${error.message}`);
+    }
   }
 }
 
