@@ -1,0 +1,29 @@
+{
+  "name": "commit-warrior",
+  "version": "1.0.0",
+  "description": "Track your daily GitHub commits",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "package-mac": "electron-packager . --overwrite --platform=darwin --arch=x64 --icon=assets/icon.icns --prune=true --out=release-builds",
+    "package-win": "electron-packager . --overwrite --platform=win32 --arch=x64 --icon=assets/icon.ico --prune=true --out=release-builds --version-string.CompanyName=CE --version-string.FileDescription=CE --version-string.ProductName=\"GitHub Commit Tracker\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/developer-az/commit-warrior.git"
+  },
+  "author": "Anthony Zhou",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/developer-az/commit-warrior/issues"
+  },
+  "homepage": "https://github.com/developer-az/commit-warrior#readme",
+  "devDependencies": {
+    "electron": "^35.1.2"
+  },
+  "dependencies": {
+    "axios": "^1.8.4",
+    "commit-warrior": "file:",
+    "electron-store": "^10.0.1"
+  }
+}

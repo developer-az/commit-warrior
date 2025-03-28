@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Commit Warrior</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #1e1e1e;
+      color: #e1e1e1;
+      height: 100vh;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+    
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+    }
+    
+    .status {
+      font-size: 18px;
+      margin-top: 15px;
+      text-align: center;
+    }
+    
+    .status-icon {
+      width: 120px;
+      height: 120px;
+      border-radius: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 60px;
+      margin-bottom: 20px;
+    }
+    
+    .committed {
+      background-color: #2ea043;
+    }
+    
+    .not-committed {
+      background-color: #f85149;
+    }
+    
+    .setup-form {
+      width: 100%;
+      max-width: 300px;
+    }
+    
+    .input-group {
+      margin-bottom: 15px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 5px;
+    }
+    
+    input {
+      width: 100%;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #444;
+      background-color: #2d2d2d;
+      color: #e1e1e1;
+    }
+    
+    button {
+      background-color: #2ea043;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      width: 100%;
+    }
+    
+    button:hover {
+      background-color: #3cb550;
+    }
+    
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <h1>Commit Warrior</h1>
+    
+    <!-- Status Container -->
+    <div id="status-container">
+      <div id="status-icon"></div>
+      <div id="status-message">Checking commit status...</div>
+      <button id="check-now-btn">Check Now</button>
+    </div>
+
+    <!-- Setup Form -->
+    <div id="setup-form" class="hidden">
+      <h2>Setup Required</h2>
+      <div class="form-group">
+        <label for="github-username">GitHub Username:</label>
+        <input type="text" id="github-username" placeholder="Enter your GitHub username">
+      </div>
+      <div class="form-group">
+        <label for="github-token">GitHub Token:</label>
+        <input type="password" id="github-token" placeholder="Enter your GitHub token">
+      </div>
+      <button id="save-settings-btn">Save Settings</button>
+    </div>
+  </div>
+  
+  <script src="renderer.js"></script>
+</body>
+</html>
