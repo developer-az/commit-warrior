@@ -8,6 +8,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const tokenInput = document.getElementById('github-token');
     const saveSettingsBtn = document.getElementById('save-settings-btn');
     const checkNowBtn = document.getElementById('check-now-btn');
+    const updateBanner = document.getElementById('update-banner');
+    const updateNowBtn = document.getElementById('update-now-btn');
+    const appVersion = document.getElementById('app-version');
+    
+    // Set current version
+    appVersion.textContent = process.env.npm_package_version || '1.0.0';
     
     // Load saved settings
     const settings = await window.electronAPI.getSettings();
@@ -55,6 +61,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     checkNowBtn.addEventListener('click', async () => {
       const result = await window.electronAPI.checkCommits();
       updateUI(result);
+    });
+
+    // Handle update ready
+    window.electronAPI.onUpdateReady(() => {
+      updateBanner.classList.add('show');
+    });
+
+    // Handle update installation
+    updateNowBtn.addEventListener('click', () => {
+      window.electronAPI.installUpdate();
     });
     
     // Update UI based on result

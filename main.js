@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const axios = require('axios');
 const Store = require('electron-store');
+const { autoUpdater } = require('electron-updater');
 
 // Initialize electron store
 const store = new Store();
@@ -21,6 +22,49 @@ function createWindow() {
 
   mainWindow.loadFile('index.html');
 }
+
+// Configure auto updater
+function setupAutoUpdater() {
+  autoUpdater.logger = require('electron-log');
+  autoUpdater.logger.transports.file.level = 'info';
+
+  // Check for updates when the app starts
+  autoUpdater.checkForUpdatesAndNotify();
+
+  // Check for updates every hour
+  setInterval(() => {
+    autoUpdater.checkForUpdatesAndNotify();
+  }, 60 * 60 * 1000);
+}
+
+// Auto updater events
+autoUpdater.on('checking-for-update', () => {
+  console.log('Checking for updates...');
+});
+
+autoUpdater.on('update-available', (info) => {
+  console.log('Update available:', info);
+});
+
+autoUpdater.on('update-not-available', (info) => {
+  console.log('Update not available:', info);
+});
+
+autoUpdater.on('error', (err) => {
+  console.log('Error in auto-updater:', err);
+});
+
+autoUpdater.on('download-progress', (progressObj) => {
+  console.log('Download progress:', progressObj);
+});
+
+autoUpdater.on('update-downloaded', (info) => {
+  console.log('Update downloaded:', info);
+  // Notify the user that an update is ready
+  if (mainWindow) {
+    mainWindow.webContents.send('update-ready');
+  }
+});
 
 // Check GitHub commits
 async function checkGitHubCommits(username, token) {
@@ -52,7 +96,10 @@ async function checkGitHubCommits(username, token) {
   }
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  createWindow();
+  setupAutoUpdater();
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
@@ -80,4 +127,9 @@ ipcMain.handle('check-commits', async () => {
 
 ipcMain.handle('get-settings', () => {
   return store.get('settings') || { githubUsername: '', githubToken: '' };
+});
+
+// Handle update installation
+ipcMain.handle('install-update', () => {
+  autoUpdater.quitAndInstall();
 });

@@ -6,5 +6,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getSettings: () => ipcRenderer.invoke('get-settings'),
   onCommitStatus: (callback) => ipcRenderer.on('commit-status', (_, value) => callback(value)),
   onSetupRequired: (callback) => ipcRenderer.on('setup-required', () => callback()),
-  onApiError: (callback) => ipcRenderer.on('api-error', (_, message) => callback(message))
+  onApiError: (callback) => ipcRenderer.on('api-error', (_, message) => callback(message)),
+  onUpdateReady: (callback) => ipcRenderer.on('update-ready', () => callback()),
+  installUpdate: () => ipcRenderer.invoke('install-update')
 });

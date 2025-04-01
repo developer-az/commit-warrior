@@ -93,9 +93,50 @@
     .hidden {
       display: none !important;
     }
+
+    .update-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background-color: #2ea043;
+      color: white;
+      padding: 10px;
+      text-align: center;
+      z-index: 1000;
+      display: none;
+    }
+
+    .update-banner.show {
+      display: block;
+    }
+
+    .update-banner button {
+      background-color: white;
+      color: #2ea043;
+      margin-left: 10px;
+      width: auto;
+    }
+
+    .update-banner button:hover {
+      background-color: #f0f0f0;
+    }
+
+    .version-info {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      font-size: 12px;
+      color: #666;
+    }
   </style>
 </head>
 <body>
+  <div id="update-banner" class="update-banner">
+    A new version is available! 
+    <button id="update-now-btn">Update Now</button>
+  </div>
+
   <div class="container">
     <h1>Commit Warrior</h1>
     
@@ -116,6 +157,10 @@
       </div>
       <button id="save-settings-btn">Save Settings</button>
     </div>
+  </div>
+
+  <div class="version-info">
+    Version <span id="app-version">1.0.0</span>
   </div>
   
   <script src="renderer.js"></script>

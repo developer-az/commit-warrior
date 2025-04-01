@@ -1,18 +1,20 @@
 {
     "name": "commit-warrior",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "A simple Electron app for tracking Git commits",
     "main": "main.js",
     "scripts": {
       "start": "electron .",
       "build": "electron-builder",
-      "pack": "electron-packager . commit-warrior --platform=win32 --arch=x64 --out=dist --asar --overwrite"
+      "pack": "electron-packager . commit-warrior --platform=win32 --arch=x64 --out=dist --asar --overwrite",
+      "publish": "electron-builder --publish always"
     },
     "author": "Anthony Zhou",
     "license": "ISC",
     "dependencies": {
       "axios": "^1.6.7",
-      "electron-store": "^8.1.0"
+      "electron-store": "^8.1.0",
+      "electron-updater": "^6.1.8"
     },
     "devDependencies": {
       "electron": "^28.3.3",
@@ -27,6 +29,11 @@
       },
       "win": {
         "target": "nsis"
+      },
+      "publish": {
+        "owner": "developer-az",
+        "repo": "commit-warrior",
+        "provider": "github"
       }
     }
   }
