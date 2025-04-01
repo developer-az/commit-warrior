@@ -1,7 +1,5 @@
 # Commit Warrior
 
-![Commit Warrior Logo](https://via.placeholder.com/150x150?text=CW)
-
 A simple Electron app that helps you track your daily GitHub commit streak. Stay motivated and consistent with your coding practice by keeping your commit streak alive!
 
 ## Features
@@ -53,10 +51,6 @@ npm run build
    - Use the "Check Now" button to refresh at any time
    - A green checkmark means you've committed today! 🎉
    - A red X means you haven't committed yet today
-
-## Screenshots
-
-![Main Screen](https://via.placeholder.com/400x300?text=Commit+Warrior+Screenshot)
 
 ## Technical Details
 
