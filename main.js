@@ -1,81 +1,35 @@
-const { app, BrowserWindow, Tray, Menu, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const axios = require('axios');
-const fs = require('fs');
+const Store = require('electron-store');
 
-// Simple file-based storage
-const settingsPath = path.join(app.getPath('userData'), 'settings.json');
-
-// Load settings from file or use defaults
-let settings = { githubUsername: '', githubToken: '' };
-try {
-  if (fs.existsSync(settingsPath)) {
-    settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
-  }
-} catch (error) {
-  console.error('Error loading settings:', error);
-}
-
-// Save settings to file
-function saveSettings(newSettings) {
-  settings = newSettings;
-  try {
-    fs.writeFileSync(settingsPath, JSON.stringify(settings));
-  } catch (error) {
-    console.error('Error saving settings:', error);
-  }
-}
+// Initialize electron store
+const store = new Store();
 
 let mainWindow;
-let tray;
-let isQuitting = false;
 
-// Create the app window
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 600,
-    height: 500,
+    width: 400,
+    height: 300,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      contextIsolation: true
-    },
-    show: false,
-    resizable: true,
-    minWidth: 500,
-    minHeight: 400
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js')
+    }
   });
 
   mainWindow.loadFile('index.html');
-  
-  // Show window when it's ready
-  mainWindow.once('ready-to-show', () => {
-    mainWindow.show();
-  });
-  
-  // Hide app from taskbar/dock when closed
-  mainWindow.on('close', (event) => {
-    if (!isQuitting) {
-      event.preventDefault();
-      mainWindow.hide();
-      return false;
-    }
-  });
 }
 
 // Check GitHub commits
-async function checkGitHubCommits() {
-  const username = settings.githubUsername;
-  const token = settings.githubToken;
-  
+async function checkGitHubCommits(username, token) {
   if (!username || !token) {
-    mainWindow.webContents.send('setup-required');
-    return false;
+    return { success: false, message: 'GitHub credentials not set' };
   }
-  
+
   try {
-    // Get today's date in ISO format (YYYY-MM-DD)
     const today = new Date().toISOString().split('T')[0];
-    
     const response = await axios.get(
       `https://api.github.com/search/commits?q=author:${username}+committer-date:${today}`,
       {
@@ -85,95 +39,45 @@ async function checkGitHubCommits() {
         }
       }
     );
-    
-    const hasCommittedToday = response.data.total_count > 0;
-    
-    // Send result to renderer process
-    mainWindow.webContents.send('commit-status', hasCommittedToday);
-    
-    // Update tray icon based on status
-    updateTray(hasCommittedToday);
-    
-    return hasCommittedToday;
+
+    return {
+      success: true,
+      hasCommitted: response.data.total_count > 0
+    };
   } catch (error) {
-    console.error('Error checking GitHub commits:', error);
-    mainWindow.webContents.send('api-error', error.message);
-    return false;
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message
+    };
   }
 }
 
-// Update tray icon and tooltip
-function updateTray(hasCommittedToday) {
-  const iconName = hasCommittedToday ? 'committed.png' : 'not-committed.png';
-  const iconPath = path.join(__dirname, 'assets', iconName);
-  
-  if (!fs.existsSync(iconPath)) {
-    console.error(`Tray icon not found at: ${iconPath}`);
-    return;
-  }
-  
-  if (tray) {
-    try {
-      tray.setImage(iconPath);
-      tray.setToolTip(hasCommittedToday ? 
-        'You made a commit today! 🎉' : 
-        'No commits yet today');
-    } catch (error) {
-      console.error(`Error updating tray icon: ${error.message}`);
-    }
-  }
-}
-
-app.whenReady().then(() => {
-  createWindow();
-  
-  // Create tray icon (make sure icons exist in assets folder)
-  const iconPath = path.join(__dirname, 'assets', 'not-committed.png');
-  tray = new Tray(iconPath);
-  tray.setToolTip('GitHub Commit Tracker');
-  
-  // Context menu for tray
-  const contextMenu = Menu.buildFromTemplate([
-    { label: 'Show App', click: () => mainWindow.show() },
-    { label: 'Check Now', click: checkGitHubCommits },
-    { type: 'separator' },
-    { label: 'Quit', click: () => {
-      isQuitting = true;
-      app.quit();
-    }}
-  ]);
-  
-  tray.setContextMenu(contextMenu);
-  tray.on('double-click', () => {
-    mainWindow.show();
-  });
-  
-  // Initial check after a short delay
-  setTimeout(checkGitHubCommits, 1000);
-  
-  // Set up interval to check periodically (every 15 minutes)
-  setInterval(checkGitHubCommits, 15 * 60 * 1000);
-});
-
-// Listen for save settings from renderer
-ipcMain.on('save-settings', (event, newSettings) => {
-  saveSettings(newSettings);
-  checkGitHubCommits();
-});
-
-// Run a one-time check when requested
-ipcMain.on('check-commits', () => {
-  checkGitHubCommits();
-});
+app.whenReady().then(createWindow);
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
 });
 
 app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow();
+  }
 });
 
-app.on('before-quit', () => {
-  isQuitting = true;
+// IPC handlers
+ipcMain.handle('save-settings', async (event, settings) => {
+  store.set('settings', settings);
+  const result = await checkGitHubCommits(settings.githubUsername, settings.githubToken);
+  return result;
+});
+
+ipcMain.handle('check-commits', async () => {
+  const settings = store.get('settings');
+  return await checkGitHubCommits(settings?.githubUsername, settings?.githubToken);
+});
+
+ipcMain.handle('get-settings', () => {
+  return store.get('settings') || { githubUsername: '', githubToken: '' };
 });
