@@ -1,6 +1,6 @@
 {
     "name": "commit-warrior",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "description": "Track your daily GitHub contributions",
     "main": "main.js",
     "scripts": {
@@ -35,13 +35,7 @@
       },
       "win": {
         "target": "nsis",
-        "icon": "assets/icon.ico",
-        "signingHashAlgorithms": ["sha256"],
-        "signAndEditExecutable": true,
-        "certificateFile": "certificates/certificate.pfx",
-        "certificatePassword": "",
-        "timeStampServer": "http://timestamp.digicert.com",
-        "publisherName": "Commit Warrior"
+        "icon": "assets/icon.ico"
       },
       "nsis": {
         "oneClick": false,
@@ -51,7 +45,7 @@
       },
       "publish": {
         "provider": "github",
-        "owner": "Az040",
+        "owner": "developer-az",
         "repo": "commit-warrior"
       }
     }
