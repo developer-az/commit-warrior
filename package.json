@@ -1,21 +1,32 @@
 {
-  "name": "commit-warrior",
-  "version": "1.0.0",
-  "description": "A simple Electron app for tracking Git commits",
-  "main": "main.js",
-  "scripts": {
-    "start": "electron .",
-    "package": "electron-packager . commit-warrior --platform=win32 --arch=x64 --out=dist --asar --overwrite"
-  },
-  "author": "Anthony Zhou",
-  "license": "ISC",
-  "dependencies": {
-    "axios": "^1.6.7",
-    "commit-warrior": "file:",
-    "electron-store": "^8.1.0"
-  },
-  "devDependencies": {
-    "electron": "^28.3.3",
-    "electron-packager": "^17.1.2"
+    "name": "commit-warrior",
+    "version": "1.0.0",
+    "description": "A simple Electron app for tracking Git commits",
+    "main": "main.js",
+    "scripts": {
+      "start": "electron .",
+      "build": "electron-builder",
+      "pack": "electron-packager . commit-warrior --platform=win32 --arch=x64 --out=dist --asar --overwrite"
+    },
+    "author": "Anthony Zhou",
+    "license": "ISC",
+    "dependencies": {
+      "axios": "^1.6.7",
+      "electron-store": "^8.1.0"
+    },
+    "devDependencies": {
+      "electron": "^28.3.3",
+      "electron-packager": "^17.1.2",
+      "electron-builder": "^24.6.4"
+    },
+    "build": {
+      "appId": "com.anthonyzhou.commit-warrior",
+      "productName": "Commit Warrior",
+      "directories": {
+        "output": "dist"
+      },
+      "win": {
+        "target": "nsis"
+      }
+    }
   }
-}
