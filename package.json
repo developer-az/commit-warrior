@@ -45,6 +45,7 @@
       },
       "publish": {
         "provider": "github",
+        "releaseType": "release",
         "owner": "developer-az",
         "repo": "commit-warrior"
       }

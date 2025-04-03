@@ -17,6 +17,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const streakCount = document.getElementById('streak-count');
     const loadingSpinner = document.getElementById('loading-spinner');
 
+    window.electronAPI.onUpdateReady(() => {
+        const confirmUpdate = confirm("A new update is ready. Would you like to install it now?");
+        if (confirmUpdate) {
+          window.electronAPI.installUpdate();
+        }
+      });
+      
+
     // Helper function to show message
     function showMessage(message, type = '') {
         statusMessage.textContent = message;
