@@ -1,6 +1,6 @@
 {
     "name": "commit-warrior",
-    "version": "1.0.6",
+    "version": "1.0.7",
     "description": "Track your daily GitHub contributions",
     "main": "main.js",
     "scripts": {
