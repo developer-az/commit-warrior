@@ -16,6 +16,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const commitCount = document.getElementById('commit-count');
     const streakCount = document.getElementById('streak-count');
     const loadingSpinner = document.getElementById('loading-spinner');
+    
+    // Status info elements
+    const statusInfo = document.getElementById('status-info');
+    const methodInfo = document.getElementById('method-info');
+    const cacheInfo = document.getElementById('cache-info');
+    const rateLimitInfo = document.getElementById('rate-limit-info');
 
     window.electronAPI.onUpdateReady(() => {
         const confirmUpdate = confirm("A new update is ready. Would you like to install it now?");
@@ -203,6 +209,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Add method info for debugging (if verbose logging is enabled)
                 if (result.method) {
                     console.log(`Commit data retrieved via: ${result.method}`);
+                    methodInfo.textContent = `Data source: ${result.method} API`;
+                }
+                
+                // Show cache status
+                if (result.cached) {
+                    cacheInfo.textContent = '⚡ Using cached data for faster response';
+                } else {
+                    cacheInfo.textContent = '';
+                }
+                
+                // Show rate limit info if available
+                if (result.rateLimitRemaining !== undefined) {
+                    if (result.rateLimitRemaining < 100) {
+                        rateLimitInfo.textContent = `⚠️ API limit: ${result.rateLimitRemaining} requests remaining`;
+                        rateLimitInfo.style.color = '#f9c513';
+                    } else {
+                        rateLimitInfo.textContent = `✅ API status: ${result.rateLimitRemaining} requests remaining`;
+                        rateLimitInfo.style.color = '#8b949e';
+                    }
                 }
                 
                 showMessage(message, messageType);
@@ -236,6 +261,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 updateStatusImages(false);
                 commitCount.textContent = '?';
                 streakCount.textContent = '?';
+                
+                // Clear status info on error
+                methodInfo.textContent = '';
+                cacheInfo.textContent = '';
+                rateLimitInfo.textContent = '';
             }
         } catch (error) {
             console.error('Error checking commits:', error);
@@ -243,6 +273,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             updateStatusImages(false);
             commitCount.textContent = '?';
             streakCount.textContent = '?';
+            
+            // Clear status info on error
+            methodInfo.textContent = '';
+            cacheInfo.textContent = '';
+            rateLimitInfo.textContent = '';
         } finally {
             setLoading(false);
         }

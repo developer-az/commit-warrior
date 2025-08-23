@@ -6,7 +6,11 @@
     "scripts": {
       "start": "electron .",
       "build": "electron-builder",
-      "test": "echo \"Error: no test specified\" && exit 1"
+      "test": "node tests/stability-tests.js",
+      "test:watch": "nodemon tests/stability-tests.js",
+      "dev": "NODE_ENV=development electron .",
+      "lint": "echo 'No linting configured yet'",
+      "clean": "rm -rf dist/ node_modules/.cache"
     },
     "author": "",
     "license": "ISC",

@@ -2,28 +2,30 @@ const Store = require('electron-store');
 
 class ConfigManager {
   constructor() {
+    this.defaults = {
+      settings: {
+        githubUsername: '',
+        githubToken: ''
+      },
+      preferences: {
+        checkInterval: 15, // minutes
+        enableNotifications: true,
+        enableAutoCheck: true,
+        theme: 'dark',
+        maxRepositoriesToCheck: 20,
+        cacheTimeout: 5, // minutes
+        enableVerboseLogging: false
+      },
+      cache: {
+        lastCheck: null,
+        lastResult: null,
+        userInfo: null
+      }
+    };
+
     this.store = new Store({
       name: 'commit-warrior-config',
-      defaults: {
-        settings: {
-          githubUsername: '',
-          githubToken: ''
-        },
-        preferences: {
-          checkInterval: 15, // minutes
-          enableNotifications: true,
-          enableAutoCheck: true,
-          theme: 'dark',
-          maxRepositoriesToCheck: 20,
-          cacheTimeout: 5, // minutes
-          enableVerboseLogging: false
-        },
-        cache: {
-          lastCheck: null,
-          lastResult: null,
-          userInfo: null
-        }
-      }
+      defaults: this.defaults
     });
   }
 
@@ -72,7 +74,7 @@ class ConfigManager {
   }
 
   resetPreferencesToDefault() {
-    const defaults = this.store.defaults.preferences;
+    const defaults = this.defaults.preferences;
     this.store.set('preferences', defaults);
     return defaults;
   }
