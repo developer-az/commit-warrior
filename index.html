@@ -372,6 +372,196 @@
         grid-template-columns: 1fr;
       }
     }
+
+    /* Debug Panel Styles */
+    .debug-toggle {
+      margin-top: 1rem;
+      text-align: center;
+    }
+
+    .debug-btn {
+      background-color: #666;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.2s ease;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+
+    .debug-btn:hover {
+      background-color: #777;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .debug-btn.small {
+      padding: 0.3rem 0.6rem;
+      font-size: 0.75rem;
+      margin: 0 0.25rem;
+    }
+
+    .debug-panel {
+      margin-top: 2rem;
+      padding: 1rem;
+      background-color: var(--input-bg);
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .debug-panel h3 {
+      color: var(--primary-color);
+      margin: 0 0 1rem 0;
+      font-size: 1.1rem;
+    }
+
+    .debug-panel h4 {
+      color: var(--text-color);
+      margin: 1rem 0 0.5rem 0;
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+
+    .debug-controls {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    #log-level-select {
+      background-color: var(--input-bg);
+      color: var(--text-color);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 0.3rem 0.5rem;
+      font-size: 0.75rem;
+    }
+
+    .debug-section {
+      margin-bottom: 1rem;
+    }
+
+    .debug-content {
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 0.7rem;
+      line-height: 1.3;
+      background-color: var(--bg-color);
+      padding: 0.75rem;
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
+      max-height: 200px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .debug-content.json {
+      color: #e6db74;
+    }
+
+    .debug-content .log-entry {
+      margin-bottom: 0.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .debug-content .log-entry:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .debug-content .log-timestamp {
+      color: #8b949e;
+      font-size: 0.65rem;
+    }
+
+    .debug-content .log-level {
+      font-weight: bold;
+      margin-right: 0.5rem;
+    }
+
+    .debug-content .log-level.ERROR {
+      color: var(--error-color);
+    }
+
+    .debug-content .log-level.WARN {
+      color: #f9c513;
+    }
+
+    .debug-content .log-level.INFO {
+      color: var(--primary-color);
+    }
+
+    .debug-content .log-level.DEBUG {
+      color: #8b949e;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 4px;
+      background-color: var(--input-bg);
+      border-radius: 2px;
+      margin: 0.5rem 0;
+      overflow: hidden;
+    }
+
+    .progress-bar .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary-color), var(--primary-hover));
+      width: 0%;
+      transition: width 0.3s ease;
+      border-radius: 2px;
+    }
+
+    .status-details {
+      margin-top: 1rem;
+      padding: 1rem;
+      background-color: var(--input-bg);
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      font-size: 0.85rem;
+    }
+
+    .status-details h4 {
+      color: var(--primary-color);
+      margin: 0 0 0.5rem 0;
+      font-size: 0.9rem;
+    }
+
+    .method-result {
+      margin: 0.5rem 0;
+      padding: 0.5rem;
+      background-color: var(--bg-color);
+      border-radius: 4px;
+      border-left: 3px solid var(--border-color);
+    }
+
+    .method-result.success {
+      border-left-color: var(--primary-color);
+    }
+
+    .method-result.error {
+      border-left-color: var(--error-color);
+    }
+
+    .method-name {
+      font-weight: 600;
+      color: var(--text-color);
+    }
+
+    .method-details {
+      font-size: 0.8rem;
+      color: #8b949e;
+      margin-top: 0.25rem;
+    }
   </style>
 </head>
 <body>
@@ -379,6 +569,9 @@
     <div class="header">
       <h1>Commit Warrior</h1>
       <div class="subtitle">Track your daily GitHub contributions</div>
+      <div class="debug-toggle">
+        <button id="debug-toggle-btn" class="debug-btn">🔧 Debug Mode</button>
+      </div>
     </div>
     
     <!-- Setup Form -->
@@ -430,6 +623,36 @@
           <div class="stat-value" id="streak-count">0</div>
           <div class="stat-label">Day Streak</div>
         </div>
+      </div>
+    </div>
+
+    <!-- Debug Panel -->
+    <div id="debug-panel" class="debug-panel hidden">
+      <h3>Debug Information</h3>
+      <div class="debug-controls">
+        <button id="refresh-debug-btn" class="debug-btn small">Refresh</button>
+        <button id="clear-logs-btn" class="debug-btn small">Clear Logs</button>
+        <select id="log-level-select">
+          <option value="ERROR">Error</option>
+          <option value="WARN">Warning</option>
+          <option value="INFO" selected>Info</option>
+          <option value="DEBUG">Debug</option>
+        </select>
+      </div>
+      
+      <div class="debug-section">
+        <h4>Rate Limit Status</h4>
+        <div id="rate-limit-info" class="debug-content">Loading...</div>
+      </div>
+      
+      <div class="debug-section">
+        <h4>Recent API Results</h4>
+        <div id="api-results" class="debug-content">No recent results</div>
+      </div>
+      
+      <div class="debug-section">
+        <h4>Application Logs</h4>
+        <div id="logs-content" class="debug-content">Loading...</div>
       </div>
     </div>
   </div>

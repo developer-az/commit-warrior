@@ -9,5 +9,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onSetupRequired: (callback) => ipcRenderer.on('setup-required', () => callback()),
   onApiError: (callback) => ipcRenderer.on('api-error', (_, message) => callback(message)),
   onUpdateReady: (callback) => ipcRenderer.on('update-ready', () => callback()),
-  installUpdate: () => ipcRenderer.invoke('install-update')
+  installUpdate: () => ipcRenderer.invoke('install-update'),
+  
+  // Debug functions
+  getLogs: (level, limit) => ipcRenderer.invoke('get-logs', level, limit),
+  clearLogs: () => ipcRenderer.invoke('clear-logs'),
+  getRateLimitStatus: () => ipcRenderer.invoke('get-rate-limit-status'),
+  setLogLevel: (level) => ipcRenderer.invoke('set-log-level', level)
 });
