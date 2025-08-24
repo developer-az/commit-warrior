@@ -22,7 +22,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const debugPanel = document.getElementById('debug-panel');
     const refreshDebugBtn = document.getElementById('refresh-debug-btn');
     const clearLogsBtn = document.getElementById('clear-logs-btn');
+    const clearCacheBtn = document.getElementById('clear-cache-btn');
     const logLevelSelect = document.getElementById('log-level-select');
+    const cacheStats = document.getElementById('cache-stats');
     const rateLimitInfo = document.getElementById('rate-limit-info');
     const apiResults = document.getElementById('api-results');
     const logsContent = document.getElementById('logs-content');
@@ -125,6 +127,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!debugMode) return;
         
         try {
+            // Update cache stats
+            const cacheStatsData = await window.electronAPI.getCacheStats();
+            cacheStats.textContent = JSON.stringify(cacheStatsData, null, 2);
+            
             // Update rate limit status
             const rateLimitStatus = await window.electronAPI.getRateLimitStatus();
             rateLimitInfo.textContent = JSON.stringify(rateLimitStatus, null, 2);
@@ -344,6 +350,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         } catch (error) {
             showMessage('Failed to clear logs', 'error');
+        }
+    });
+    
+    clearCacheBtn.addEventListener('click', async () => {
+        try {
+            await window.electronAPI.clearCache();
+            showMessage('Cache cleared', 'success');
+            if (debugMode) {
+                refreshDebugInfo();
+            }
+        } catch (error) {
+            showMessage('Failed to clear cache', 'error');
         }
     });
     

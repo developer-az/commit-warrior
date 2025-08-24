@@ -15,5 +15,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getLogs: (level, limit) => ipcRenderer.invoke('get-logs', level, limit),
   clearLogs: () => ipcRenderer.invoke('clear-logs'),
   getRateLimitStatus: () => ipcRenderer.invoke('get-rate-limit-status'),
-  setLogLevel: (level) => ipcRenderer.invoke('set-log-level', level)
+  setLogLevel: (level) => ipcRenderer.invoke('set-log-level', level),
+  getCacheStats: () => ipcRenderer.invoke('get-cache-stats'),
+  clearCache: () => ipcRenderer.invoke('clear-cache')
 });

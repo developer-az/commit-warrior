@@ -239,3 +239,12 @@ ipcMain.handle('set-log-level', (event, level) => {
   logger.info(`Log level set to ${level}`);
   return { success: true };
 });
+
+ipcMain.handle('get-cache-stats', () => {
+  return githubAPI.getCacheStats();
+});
+
+ipcMain.handle('clear-cache', () => {
+  githubAPI.clearCache();
+  return { success: true };
+});

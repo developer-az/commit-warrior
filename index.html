@@ -632,12 +632,18 @@
       <div class="debug-controls">
         <button id="refresh-debug-btn" class="debug-btn small">Refresh</button>
         <button id="clear-logs-btn" class="debug-btn small">Clear Logs</button>
+        <button id="clear-cache-btn" class="debug-btn small">Clear Cache</button>
         <select id="log-level-select">
           <option value="ERROR">Error</option>
           <option value="WARN">Warning</option>
           <option value="INFO" selected>Info</option>
           <option value="DEBUG">Debug</option>
         </select>
+      </div>
+      
+      <div class="debug-section">
+        <h4>Cache Status</h4>
+        <div id="cache-stats" class="debug-content">Loading...</div>
       </div>
       
       <div class="debug-section">
