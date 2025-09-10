@@ -7,15 +7,16 @@ Commit Warrior is an Electron desktop application that helps users track their d
 ## Working Effectively
 
 ### Bootstrap and Dependencies
-- Install dependencies: `npm install` -- takes ~30 seconds. NEVER CANCEL.
-- Check for circular dependencies: `node scripts/check-circular.js`
+- Install dependencies: `npm install` -- takes ~35 seconds. NEVER CANCEL. Set timeout to 60+ seconds.
+- Check for circular dependencies: `node scripts/check-circular.js` -- takes <1 second
 - Dependencies include: axios (GitHub API), electron-store (settings), electron-updater (auto-updates)
+- **Security Note**: Current Electron version (28.1.0) has moderate vulnerability, upgrade available to 38.1.0+
 
 ### Development and Building
 - **CRITICAL**: The application CANNOT be run in CI/headless environments due to Electron sandbox requirements
-- Development mode: `npm start` -- only works with display/GUI environment
-- Build: `npm run build` -- takes ~3 seconds. NEVER CANCEL. Set timeout to 2+ minutes for safety.
-- **Build Limitation**: Building on Linux fails due to icon.ico size requirements (must be 256x256+), but successfully creates `dist/linux-unpacked/` directory with runnable application
+- Development mode: `npm start` -- only works with display/GUI environment. In headless: "SUID sandbox helper binary" error
+- Build: `npm run build` -- takes ~3.5 seconds. NEVER CANCEL. Set timeout to 5+ minutes for safety.
+- **Build Limitation**: Building on Linux fails due to icon.ico size requirements (current: 16x16/24x24, needs 256x256+), but successfully creates `dist/linux-unpacked/` directory with runnable application (~177MB executable + ~9.4MB app.asar)
 - The build process uses electron-builder and targets Windows (NSIS installer), Linux (AppImage, Snap)
 
 ### No Test Infrastructure
@@ -33,14 +34,16 @@ Since the app cannot run in CI environments, you MUST document your changes thor
 3. **Streak Calculation**: App calculates consecutive commit days using GitHub events data
 4. **Visual Feedback**: Green checkmark for commits today, red X for no commits
 5. **Auto-updates**: App checks for updates via electron-updater
+6. **Build Verification**: Successful build creates `dist/linux-unpacked/commit-warrior` executable (~177MB) and `resources/app.asar` (~9.4MB)
 
 ### Code Validation Steps
 Always validate your changes by:
-- Running `npm install` after package.json changes
-- Running `node scripts/check-circular.js` to check dependencies
-- Running `npm run build` to ensure no build-breaking changes (expect icon-related failures on Linux)
+- Running `npm install` after package.json changes (35s, timeout 60+ seconds)
+- Running `node scripts/check-circular.js` to check dependencies (<1 second)
+- Running `npm run build` to ensure no build-breaking changes (3.5s, timeout 5+ minutes) - expect icon-related failures on Linux
 - Reviewing main.js, renderer.js, and preload.js for IPC communication correctness
 - Checking that GitHub API calls in `checkGitHubCommits()` function remain functional
+- **NEVER TRY** `npm start` in CI/headless - will fail with sandbox errors
 
 ## Project Structure
 
@@ -82,9 +85,23 @@ Always test GitHub API changes with valid credentials to ensure rate limiting an
 5. Test the full flow by running through user scenarios
 6. Run `npm run build` to ensure no breaking changes
 
+### Essential Commands Reference
+```bash
+# Bootstrap and validate (ALWAYS run in this order)
+npm install                           # 35s, never cancel, timeout 60+s
+node scripts/check-circular.js       # <1s, check dependencies  
+npm run build                         # 3.5s, never cancel, timeout 5+min, expect icon errors on Linux
+npm test                              # Fails: "Error: no test specified"
+npm start                             # Fails in CI: "SUID sandbox helper binary" error
+
+# Security and validation
+npm audit                             # Shows Electron vulnerability (moderate)
+```
+
 ### Build Timing Expectations
-- `npm install`: ~30 seconds - NEVER CANCEL, set timeout to 60+ seconds
-- `npm run build`: ~3 seconds - NEVER CANCEL, set timeout to 2+ minutes for safety
+- `npm install`: ~35 seconds - NEVER CANCEL, set timeout to 60+ seconds
+- `npm run build`: ~3.5 seconds - NEVER CANCEL, set timeout to 5+ minutes for safety
+- `node scripts/check-circular.js`: <1 second
 - Icon errors on Linux are expected and do not prevent core functionality
 
 ### Dependency Management
@@ -95,10 +112,11 @@ Always test GitHub API changes with valid credentials to ensure rate limiting an
 ## Troubleshooting
 
 ### Common Issues
-- **Electron sandbox errors**: Expected in CI environments - app requires GUI
-- **Icon size errors during build**: Linux build limitation, does not affect Windows builds  
+- **Electron sandbox errors**: Expected in CI environments - app requires GUI. Error: "SUID sandbox helper binary was found, but is not configured correctly"
+- **Icon size errors during build**: Linux build limitation (current icon: 16x16/24x24, needs 256x256+), does not affect Windows builds  
 - **GitHub API rate limiting**: Handle gracefully in `checkGitHubCommits()` function
 - **Missing credentials**: App handles via setup flow in UI
+- **Security vulnerability**: Electron 28.1.0 has moderate vulnerability, upgrade to 38.1.0+ available
 
 ### Files to Always Check After Changes
 - After modifying GitHub API logic: Review `main.js` checkGitHubCommits() function
