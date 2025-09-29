@@ -6,3 +6,12 @@ certificates/*.key
 certificates/*.pem
 certificates/*.pfx
 .env
+
+# Temporary files
+/tmp/
+.tmp/
+*.tmp
+
+# Log files
+logs/
+*.log.*
