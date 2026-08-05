@@ -1,53 +1,23 @@
 {
-    "name": "commit-warrior",
-    "version": "1.0.6",
-    "description": "Track your daily GitHub contributions",
-    "main": "main.js",
-    "scripts": {
-      "start": "electron .",
-      "build": "electron-builder",
-      "test": "echo \"Error: no test specified\" && exit 1"
-    },
-    "author": "",
-    "license": "ISC",
-    "repository": {
-      "type": "git",
-      "url": "git+https://github.com/developer-az/commit-warrior.git"
-    },
-    "publishConfig": {
-      "registry": "https://npm.pkg.github.com"
-    },
-    "dependencies": {
-      "axios": "^1.6.2",
-      "electron-store": "^8.1.0",
-      "electron-updater": "^6.1.7"
-    },
-    "devDependencies": {
-      "electron": "^28.1.0",
-      "electron-packager": "^17.1.2",
-      "electron-builder": "^24.9.1"
-    },
-    "build": {
-      "appId": "com.commitwarrior.app",
-      "productName": "Commit Warrior",
-      "directories": {
-        "output": "dist"
-      },
-      "win": {
-        "target": "nsis",
-        "icon": "assets/icon.ico"
-      },
-      "nsis": {
-        "oneClick": false,
-        "allowToChangeInstallationDirectory": true,
-        "createDesktopShortcut": true,
-        "createStartMenuShortcut": true
-      },
-      "publish": {
-        "provider": "github",
-        "releaseType": "release",
-        "owner": "developer-az",
-        "repo": "commit-warrior"
-      }
-    }
+  "name": "commit-warrior",
+  "version": "2.0.0",
+  "description": "GitHub README stats tracker — embed professional coding stats in your profile README",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test test/*.test.js"
+  },
+  "author": "Anthony Zhou",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/developer-az/commit-warrior.git"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
   }
+}

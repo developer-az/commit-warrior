@@ -1,0 +1,163 @@
+(() => {
+  const form = document.getElementById("lookup-form");
+  const usernameInput = document.getElementById("username");
+  const statusLine = document.getElementById("status-line");
+  const generateBtn = document.getElementById("generate-btn");
+  const generator = document.getElementById("generator");
+  const embed = document.getElementById("embed");
+  const metrics = document.getElementById("metrics");
+  const themeSelect = document.getElementById("theme");
+  const showIcons = document.getElementById("show-icons");
+  const hideRank = document.getElementById("hide-rank");
+  const compactLangs = document.getElementById("compact-langs");
+  const copyBtn = document.getElementById("copy-btn");
+
+  let currentUser = "";
+
+  function originBase() {
+    return window.location.origin;
+  }
+
+  function qs(params) {
+    return new URLSearchParams(params).toString();
+  }
+
+  function statsUrl(username) {
+    const params = {
+      username,
+      theme: themeSelect.value,
+      show_icons: String(showIcons.checked),
+    };
+    if (hideRank.checked) params.hide_rank = "true";
+    return `${originBase()}/api/stats?${qs(params)}`;
+  }
+
+  function langsUrl(username) {
+    const params = {
+      username,
+      theme: themeSelect.value,
+      layout: compactLangs.checked ? "compact" : "normal",
+    };
+    return `${originBase()}/api/top-langs?${qs(params)}`;
+  }
+
+  function formatNum(n) {
+    return new Intl.NumberFormat().format(Number(n) || 0);
+  }
+
+  function setStatus(message, type = "") {
+    statusLine.textContent = message;
+    statusLine.className = `hero-hint${type ? ` ${type}` : ""}`;
+  }
+
+  function renderMetrics(stats) {
+    const items = [
+      ["Commits", stats.totalCommits],
+      ["Pull Requests", stats.totalPRs],
+      ["PRs Merged", stats.mergedPRs],
+      ["Issues Closed", stats.closedIssues],
+      ["Code Reviews", stats.totalReviews],
+      ["Stars", stats.totalStars],
+      ["Contributed To", stats.contributedTo],
+      ["Followers", stats.followers],
+    ];
+    metrics.innerHTML = items
+      .map(
+        ([label, value]) =>
+          `<div class="metric"><strong>${formatNum(value)}</strong><span>${label}</span></div>`
+      )
+      .join("");
+  }
+
+  function updatePreview(username) {
+    const bust = Date.now();
+    const stats = `${statsUrl(username)}&_=${bust}`;
+    const langs = `${langsUrl(username)}&_=${bust}`;
+    document.getElementById("stats-card").src = stats;
+    document.getElementById("langs-card").src = langs;
+    document.getElementById("stats-url").textContent = statsUrl(username);
+    document.getElementById("langs-url").textContent = langsUrl(username);
+
+    const md = `[![${username}'s GitHub stats](${statsUrl(username)})](https://github.com/${username})
+![Top Languages](${langsUrl(username)})`;
+    document.getElementById("markdown-output").textContent = md;
+  }
+
+  async function loadUser(username) {
+    const clean = username.trim().replace(/^@/, "");
+    if (!clean) return;
+
+    generateBtn.disabled = true;
+    setStatus("Fetching GitHub activity…", "");
+
+    try {
+      const res = await fetch(`/api/json?username=${encodeURIComponent(clean)}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Request failed");
+
+      currentUser = data.login;
+      document.getElementById("avatar").src = data.avatarUrl;
+      document.getElementById("avatar").alt = `${data.login} avatar`;
+      document.getElementById("profile-name").textContent = data.name || data.login;
+      const link = document.getElementById("profile-link");
+      link.href = data.url;
+      link.textContent = `@${data.login}`;
+      document.getElementById("rank-pill").textContent = `RANK ${data.rank?.level || "—"}`;
+
+      renderMetrics(data);
+      updatePreview(data.login);
+
+      generator.hidden = false;
+      embed.hidden = false;
+      generator.scrollIntoView({ behavior: "smooth", block: "start" });
+
+      const note = data.partial
+        ? " Loaded public REST stats. Server GITHUB_TOKEN unlocks full commit history."
+        : " Full GraphQL stats loaded.";
+      setStatus(`Stats for @${data.login}.${note}`, "ok");
+
+      const url = new URL(window.location.href);
+      url.searchParams.set("username", data.login);
+      history.replaceState(null, "", url);
+    } catch (err) {
+      setStatus(err.message || "Could not load stats", "error");
+      generator.hidden = true;
+      embed.hidden = true;
+    } finally {
+      generateBtn.disabled = false;
+    }
+  }
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    loadUser(usernameInput.value);
+  });
+
+  [themeSelect, showIcons, hideRank, compactLangs].forEach((el) => {
+    el.addEventListener("change", () => {
+      if (currentUser) updatePreview(currentUser);
+    });
+  });
+
+  copyBtn.addEventListener("click", async () => {
+    const text = document.getElementById("markdown-output").textContent;
+    try {
+      await navigator.clipboard.writeText(text);
+      copyBtn.textContent = "Copied";
+      copyBtn.classList.add("copied");
+      setTimeout(() => {
+        copyBtn.textContent = "Copy";
+        copyBtn.classList.remove("copied");
+      }, 1600);
+    } catch {
+      copyBtn.textContent = "Select & copy";
+    }
+  });
+
+  const params = new URLSearchParams(window.location.search);
+  const preset = params.get("username");
+  if (preset) {
+    usernameInput.value = preset;
+    loadUser(preset);
+  }
+})();

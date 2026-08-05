@@ -2,7 +2,8 @@ node_modules/
 dist/
 .DS_Store
 *.log
+.env
 certificates/*.key
 certificates/*.pem
 certificates/*.pfx
-.env
+.cache_ggshield
