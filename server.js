@@ -32,7 +32,7 @@ try {
   /* ignore */
 }
 
-const { fetchUserStats, getToken } = require("./src/github");
+const { fetchUserStats, getToken, isTokenActive } = require("./src/github");
 const { renderStatsCard } = require("./src/cards/stats");
 const { renderLanguagesCard } = require("./src/cards/languages");
 
@@ -124,7 +124,8 @@ app.get("/api/json", async (req, res) => {
 app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
-    tokenConfigured: Boolean(getToken()),
+    tokenConfigured: Boolean(process.env.GITHUB_TOKEN || process.env.GH_TOKEN),
+    tokenActive: isTokenActive(),
     version: require("./package.json").version,
   });
 });

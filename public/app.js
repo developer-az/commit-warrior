@@ -139,18 +139,34 @@
     });
   });
 
+  function flashCopied() {
+    copyBtn.textContent = "Copied";
+    copyBtn.classList.add("copied");
+    setTimeout(() => {
+      copyBtn.textContent = "Copy";
+      copyBtn.classList.remove("copied");
+    }, 1600);
+  }
+
   copyBtn.addEventListener("click", async () => {
-    const text = document.getElementById("markdown-output").textContent;
+    const code = document.getElementById("markdown-output");
+    const text = code.textContent;
     try {
       await navigator.clipboard.writeText(text);
-      copyBtn.textContent = "Copied";
-      copyBtn.classList.add("copied");
-      setTimeout(() => {
-        copyBtn.textContent = "Copy";
-        copyBtn.classList.remove("copied");
-      }, 1600);
+      flashCopied();
     } catch {
-      copyBtn.textContent = "Select & copy";
+      // Fallback when Clipboard API is blocked (some embeds / insecure contexts)
+      const range = document.createRange();
+      range.selectNodeContents(code);
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+      try {
+        document.execCommand("copy");
+        flashCopied();
+      } catch {
+        copyBtn.textContent = "Select & copy";
+      }
     }
   });
 

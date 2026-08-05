@@ -9,26 +9,54 @@ const GITHUB_GRAPHQL = "https://api.github.com/graphql";
 const cache = new Map();
 const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
+/** When a configured token returns 401, stop attaching it and use public REST. */
+let tokenRevoked = false;
+
 function getToken() {
+  if (tokenRevoked) return "";
   return process.env.GITHUB_TOKEN || process.env.GH_TOKEN || "";
 }
 
-function authHeaders() {
-  const token = getToken();
+function revokeToken(reason) {
+  if (tokenRevoked) return;
+  if (process.env.GITHUB_TOKEN || process.env.GH_TOKEN) {
+    tokenRevoked = true;
+    console.warn(
+      `[commit-warrior] GitHub token rejected (${reason}). Falling back to public REST.`
+    );
+  }
+}
+
+function authHeaders({ allowAuth = true } = {}) {
   const headers = {
     Accept: "application/vnd.github+json",
     "User-Agent": "CommitWarrior-Stats/2.0",
     "X-GitHub-Api-Version": "2022-11-28",
   };
+  const token = allowAuth ? getToken() : "";
   if (token) headers.Authorization = `Bearer ${token}`;
   return headers;
 }
 
 async function ghFetch(url, options = {}) {
-  const res = await fetch(url, {
-    ...options,
-    headers: { ...authHeaders(), ...(options.headers || {}) },
-  });
+  const attempt = async (allowAuth) => {
+    const res = await fetch(url, {
+      ...options,
+      headers: {
+        ...authHeaders({ allowAuth }),
+        ...(options.headers || {}),
+      },
+    });
+    return res;
+  };
+
+  let res = await attempt(true);
+  // Bad/expired token must not brick public REST lookups
+  if (res.status === 401 && getToken()) {
+    revokeToken("401 from GitHub API");
+    res = await attempt(false);
+  }
+
   if (!res.ok) {
     const body = await res.text().catch(() => "");
     const err = new Error(
@@ -47,15 +75,25 @@ async function graphql(query, variables = {}) {
     err.status = 401;
     throw err;
   }
-  const data = await ghFetch(GITHUB_GRAPHQL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ query, variables }),
-  });
+  let data;
+  try {
+    data = await ghFetch(GITHUB_GRAPHQL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query, variables }),
+    });
+  } catch (err) {
+    if (err.status === 401) revokeToken(err.message);
+    throw err;
+  }
   if (data.errors?.length) {
     const msg = data.errors.map((e) => e.message).join("; ");
     const err = new Error(msg);
-    err.status = msg.toLowerCase().includes("could not resolve") ? 404 : 400;
+    const lower = msg.toLowerCase();
+    err.status =
+      lower.includes("could not resolve") || lower.includes("not found")
+        ? 404
+        : 400;
     throw err;
   }
   return data.data;
@@ -256,7 +294,17 @@ async function searchCount(query) {
 }
 
 async function fetchStatsREST(username) {
-  const user = await ghFetch(`${GITHUB_API}/users/${username}`);
+  let user;
+  try {
+    user = await ghFetch(`${GITHUB_API}/users/${username}`);
+  } catch (err) {
+    if (err.status === 404) {
+      const notFound = new Error(`User "${username}" not found`);
+      notFound.status = 404;
+      throw notFound;
+    }
+    throw err;
+  }
   if (!user?.login) {
     const err = new Error(`User "${username}" not found`);
     err.status = 404;
@@ -381,7 +429,7 @@ async function fetchUserStats(username) {
       stats = await fetchStatsGraphQL(login);
     } catch (err) {
       if (err.status === 404) throw err;
-      // Fall back to REST if GraphQL fails (rate limit, scope, etc.)
+      // Fall back to REST if GraphQL fails (bad token, rate limit, scope, etc.)
       stats = await fetchStatsREST(login);
       stats.fallbackReason = err.message;
     }
@@ -407,4 +455,8 @@ function clearCache() {
   cache.clear();
 }
 
-module.exports = { fetchUserStats, clearCache, getToken };
+function isTokenActive() {
+  return Boolean(getToken());
+}
+
+module.exports = { fetchUserStats, clearCache, getToken, isTokenActive };
