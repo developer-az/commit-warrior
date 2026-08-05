@@ -1,96 +1,112 @@
 # Commit Warrior
 
-A simple Electron app that helps you track your daily GitHub commit streak. Stay motivated and consistent with your coding practice by keeping your commit streak alive!
+Dynamically generated **GitHub README stats** — commits, pull requests, merged PRs, closed issues, code reviews, stars, and top languages. Use it as a website or embed SVG cards in any profile README.
 
-## Features
+## Two ways to use it
 
-- **Simple Status Dashboard**: Visual indicator showing whether you've committed code today
-- **GitHub Integration**: Connects to your GitHub account via personal access token
-- **Auto-updates**: Always stay on the latest version
-- **Minimal UI**: Focus on what matters - your daily commit status
-- **Tray Application**: Runs quietly in your system tray
+### 1. Website
 
-## Installation
-
-### Windows
-Download the latest installer from the [Releases](https://github.com/developer-az/commit-warrior/releases) page and run the `.exe` file.
-
-### Building from Source
-If you prefer to build from source:
+Run the app, open it in a browser, enter a GitHub username, preview the cards, and copy the markdown.
 
 ```bash
-# Clone the repository
-git clone https://github.com/developer-az/commit-warrior.git
-
-# Navigate to the project directory
-cd commit-warrior
-
-# Install dependencies
 npm install
-
-# Start the application
+cp .env.example .env   # optional: add GITHUB_TOKEN for full stats
 npm start
-
-# Build the application
-npm run build
+# → http://localhost:3000
 ```
 
-## Setup
+Optional: open with a preset user — `http://localhost:3000?username=octocat`
 
-1. **GitHub Personal Access Token**:
-   - You'll need a GitHub Personal Access Token with `repo` scope
-   - Create one at [GitHub Settings > Developer Settings > Personal access tokens](https://github.com/settings/tokens)
+### 2. README embeds (preview / markdown image)
 
-2. **First Launch**:
-   - Enter your GitHub username
-   - Enter your GitHub Personal Access Token
-   - Click "Save Settings"
+Same idea as [github-readme-stats](https://github.com/anuraghazra/github-readme-stats): the API returns an SVG. GitHub’s README renderer requests that URL and shows a live card.
 
-3. **Daily Usage**:
-   - The app will automatically check your commit status on launch
-   - Use the "Check Now" button to refresh at any time
-   - A green checkmark means you've committed today! 🎉
-   - A red X means you haven't committed yet today
+```md
+[![GitHub stats](https://YOUR_HOST/api/stats?username=YOUR_USERNAME&show_icons=true)](https://github.com/YOUR_USERNAME)
+![Top Languages](https://YOUR_HOST/api/top-langs?username=YOUR_USERNAME&layout=compact)
+```
 
-## Technical Details
+Replace `YOUR_HOST` with your deployment URL (or `http://localhost:3000` while testing).
 
-- Built with Electron
-- Uses GitHub's API to check commit status
-- Secure token storage using electron-store
-- Automatic updates via electron-updater
+## What the stats include
+
+| Metric | Meaning |
+| --- | --- |
+| Total Stars | Stars across owned (non-fork) repositories |
+| Total Commits | Contribution commits across all years (GraphQL + token) |
+| Total PRs | Pull requests authored |
+| PRs Merged | Pull requests merged |
+| Total Issues / Issues Closed | Issues authored / closed |
+| Code Reviews | Pull request review contributions |
+| Contributed to | Repositories you contributed to |
+| Top Languages | Language mix across owned repos |
+| Rank | Weighted score (S → C) from the metrics above |
+
+## API
+
+| Endpoint | Description |
+| --- | --- |
+| `GET /api/stats?username=` | Stats SVG card |
+| `GET /api/top-langs?username=` | Top languages SVG card |
+| `GET /api/json?username=` | JSON used by the website |
+| `GET /api/health` | Health + whether a token is configured |
+
+### Query options
+
+**Stats** (`/api/stats`)
+
+- `username` (required)
+- `theme` — `default` · `dark` · `light` · `tokyonight` · `radical` · `transparent`
+- `show_icons` — `true` / `false`
+- `hide_rank` — `true` / `false`
+- `hide_border` — `true` / `false`
+- `hide` — comma list: `stars,commits,prs,prs_merged,issues,issues_closed,reviews,contribs,followers`
+
+**Languages** (`/api/top-langs`)
+
+- `username` (required)
+- `theme` — same themes
+- `layout` — `normal` or `compact`
+- `langs_count` — number of languages (default 6)
+- `hide_border` — `true` / `false`
+
+## GitHub token (recommended)
+
+Without a token the server uses the public REST API (works for demos; commit totals and reviews are limited).
+
+Set `GITHUB_TOKEN` in `.env` (classic PAT with public repo access, or fine-grained read on public data) to enable GraphQL and full multi-year commit / review history.
+
+```bash
+GITHUB_TOKEN=ghp_...
+PORT=3000
+```
+
+## Deploy
+
+Any Node host works (`npm start`, port from `PORT`). Example with a process manager:
+
+```bash
+npm install --omit=dev
+GITHUB_TOKEN=... PORT=3000 npm start
+```
+
+Point a reverse proxy at the port and use that public origin in your README image URLs.
+
+## Development
+
+```bash
+npm install
+npm start          # http://localhost:3000
+npm test           # node:test unit tests
+npm run dev        # restart on file changes (Node 18+)
+```
 
 ## Privacy
 
-- Your GitHub token is stored locally on your machine
-- No data is sent to any servers except GitHub's API
-- The app only checks if you've made commits today
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## Roadmap
-
-- [ ] Streak tracking (consecutive days)
-- [ ] Commit statistics dashboard
-- [ ] Desktop notifications
-- [ ] Multiple GitHub account support
-- [ ] Custom commit goals
+- The website only needs a public GitHub username.
+- Optional server `GITHUB_TOKEN` stays on the server and is never sent to the browser.
+- Responses are cached in memory (~30 minutes) to respect GitHub rate limits.
 
 ## License
 
-This project is licensed under the ISC License - see the LICENSE file for details.
-
-## Acknowledgments
-
-- Built by [Anthony Zhou](https://github.com/developer-az)
-
----
-
-If you find Commit Warrior useful, please consider giving it a star on GitHub! ⭐
+ISC — built by [Anthony Zhou](https://github.com/developer-az).

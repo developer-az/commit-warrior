@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Commit Warrior — GitHub README Stats</title>
+  <meta name="description" content="Generate embeddable GitHub stats for your README — commits, PRs merged, issues closed, reviews, and more. Enter a username and copy the markdown." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="atmosphere" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <a class="brand-mark" href="/" aria-label="Commit Warrior home">
+      <span class="brand-glyph" aria-hidden="true"></span>
+      Commit Warrior
+    </a>
+    <nav class="topnav">
+      <a href="#generator">Generate</a>
+      <a href="#embed">Embed</a>
+      <a href="https://github.com/developer-az/commit-warrior" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <p class="brand-hero">Commit Warrior</p>
+      <h1>Professional GitHub stats for your README</h1>
+      <p class="lede">
+        Commits, merged PRs, closed issues, reviews, stars — the engineering
+        footprint that belongs on a profile. Type a username, preview the cards,
+        paste one line of markdown.
+      </p>
+      <form class="hero-form" id="lookup-form" autocomplete="off">
+        <label class="sr-only" for="username">GitHub username</label>
+        <div class="input-shell">
+          <span class="input-prefix" aria-hidden="true">@</span>
+          <input
+            id="username"
+            name="username"
+            type="text"
+            placeholder="your-github-username"
+            spellcheck="false"
+            maxlength="39"
+            required
+          />
+        </div>
+        <button type="submit" id="generate-btn">
+          <span>Show my stats</span>
+        </button>
+      </form>
+      <p class="hero-hint" id="status-line">Public profiles work instantly. No token needed on this page.</p>
+    </section>
+
+    <section class="generator" id="generator" hidden>
+      <div class="section-head">
+        <h2>Live preview</h2>
+        <p>Cards refresh from GitHub when someone views your README (cached ~30 min).</p>
+      </div>
+
+      <div class="profile-strip" id="profile-strip">
+        <img id="avatar" alt="" width="48" height="48" />
+        <div>
+          <p class="profile-name" id="profile-name"></p>
+          <a class="profile-link" id="profile-link" target="_blank" rel="noopener"></a>
+        </div>
+        <div class="rank-pill" id="rank-pill"></div>
+      </div>
+
+      <div class="metrics" id="metrics" aria-live="polite"></div>
+
+      <div class="card-stage">
+        <figure class="card-frame">
+          <figcaption>Stats card</figcaption>
+          <img id="stats-card" alt="GitHub stats card preview" />
+        </figure>
+        <figure class="card-frame">
+          <figcaption>Top languages</figcaption>
+          <img id="langs-card" alt="Top languages card preview" />
+        </figure>
+      </div>
+
+      <div class="controls">
+        <label>
+          Theme
+          <select id="theme">
+            <option value="default">Default</option>
+            <option value="dark">Dark</option>
+            <option value="light">Light</option>
+            <option value="tokyonight">Tokyo Night</option>
+            <option value="radical">Radical</option>
+            <option value="transparent">Transparent</option>
+          </select>
+        </label>
+        <label class="check">
+          <input type="checkbox" id="show-icons" checked />
+          Icons
+        </label>
+        <label class="check">
+          <input type="checkbox" id="hide-rank" />
+          Hide rank
+        </label>
+        <label class="check">
+          <input type="checkbox" id="compact-langs" checked />
+          Compact languages
+        </label>
+      </div>
+    </section>
+
+    <section class="embed" id="embed" hidden>
+      <div class="section-head">
+        <h2>README markdown</h2>
+        <p>Drop this into your profile README (<code>username/username</code> repo).</p>
+      </div>
+      <div class="code-block">
+        <pre><code id="markdown-output"></code></pre>
+        <button type="button" class="copy-btn" id="copy-btn">Copy</button>
+      </div>
+      <div class="urls">
+        <p><span>Stats URL</span> <code id="stats-url"></code></p>
+        <p><span>Languages URL</span> <code id="langs-url"></code></p>
+      </div>
+    </section>
+
+    <section class="how">
+      <div class="section-head">
+        <h2>How it works</h2>
+        <p>Same pattern as the popular README stat trackers — a dynamic SVG endpoint.</p>
+      </div>
+      <ol class="steps">
+        <li>
+          <strong>You enter a username</strong>
+          <span>We query GitHub for commits, PRs, merged work, issues, reviews, stars, and languages.</span>
+        </li>
+        <li>
+          <strong>SVG cards are rendered on demand</strong>
+          <span>GitHub’s README renderer loads the image URL; our API returns a fresh SVG.</span>
+        </li>
+        <li>
+          <strong>One markdown line embeds it forever</strong>
+          <span>Change themes or options with query params — no rebuild, no commit of binaries.</span>
+        </li>
+      </ol>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Commit Warrior · open source on <a href="https://github.com/developer-az/commit-warrior" target="_blank" rel="noopener">GitHub</a></p>
+  </footer>
+
+  <script src="/app.js"></script>
+</body>
+</html>
