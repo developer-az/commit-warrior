@@ -19,7 +19,7 @@ Commit Warrior is a **Node/Express web app** that generates GitHub README stats.
 
 ### Optional GitHub token
 - Copy `.env.example` → `.env` and set `GITHUB_TOKEN` for GraphQL (full multi-year commits, reviews, contributed-to).
-- Without a token, `/api/json` and SVG routes fall back to public REST (PRs/issues/stars/languages work; commits/reviews are limited).
+- Without a token, `/api/json` and SVG routes fall back to public REST. Commits use all-time `/search/commits?q=author:USER`. Reviews use `reviewed-by:USER`. Contributed-to counts distinct non-owned repos from public search (PRs/issues/comments/commits).
 - Token must stay server-side only — never expose it to `public/`.
 
 ## Project Structure

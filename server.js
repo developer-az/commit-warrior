@@ -142,7 +142,7 @@ if (require.main === module) {
     console.log(
       getToken()
         ? "GitHub token detected — full GraphQL stats enabled."
-        : "No GITHUB_TOKEN — using public REST (limited commit history)."
+        : "No GITHUB_TOKEN — public REST (all-time search for commits, reviews, contributed-to)."
     );
   });
 }

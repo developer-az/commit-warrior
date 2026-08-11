@@ -33,12 +33,12 @@ Replace `YOUR_HOST` with your deployment URL (or `http://localhost:3000` while t
 | Metric | Meaning |
 | --- | --- |
 | Total Stars | Stars across owned (non-fork) repositories |
-| Total Commits | Contribution commits across all years (GraphQL + token) |
+| Total Commits | **All-time** (not week/month). With token: GraphQL contribution commits across every contribution year. Without token: GitHub commit search (`author:USER`) for indexed public commits |
 | Total PRs | Pull requests authored |
 | PRs Merged | Pull requests merged |
 | Total Issues / Issues Closed | Issues authored / closed |
-| Code Reviews | Pull request review contributions |
-| Contributed to | Repositories you contributed to |
+| Code Reviews | PRs you reviewed (`reviewed-by:USER`, all-time; includes reviews on your own repos) |
+| Contributed to | Distinct repos you don’t own with public commits, authored issues/PRs, or comments |
 | Top Languages | Language mix across owned repos |
 | Rank | Weighted score (S → C) from the metrics above |
 
@@ -72,9 +72,9 @@ Replace `YOUR_HOST` with your deployment URL (or `http://localhost:3000` while t
 
 ## GitHub token (recommended)
 
-Without a token the server uses the public REST API (works for demos; commit totals and reviews are limited).
+Without a token the server uses the public REST API. Commits, reviews, and contributed-to still use **all-time** GitHub search (public/indexed activity).
 
-Set `GITHUB_TOKEN` in `.env` (classic PAT with public repo access, or fine-grained read on public data) to enable GraphQL and full multi-year commit / review history.
+Set `GITHUB_TOKEN` in `.env` (classic PAT with public repo access, or fine-grained read on public data) for GraphQL contribution commits and higher rate limits.
 
 ```bash
 GITHUB_TOKEN=ghp_...

@@ -113,6 +113,50 @@ function cacheSet(key, value) {
   cache.set(key, { value, expires: Date.now() + CACHE_TTL_MS });
 }
 
+/**
+ * Count commits from public PushEvents.
+ * Prefer distinct_size/size — modern public event payloads often omit `commits`.
+ * @param {Array<{ type?: string, payload?: object }>} events
+ */
+function countCommitsFromPushEvents(events) {
+  let total = 0;
+  for (const event of events || []) {
+    if (event?.type !== "PushEvent") continue;
+    const payload = event.payload || {};
+    if (typeof payload.distinct_size === "number") {
+      total += payload.distinct_size;
+    } else if (typeof payload.size === "number") {
+      total += payload.size;
+    } else if (Array.isArray(payload.commits)) {
+      total += payload.commits.length;
+    }
+  }
+  return total;
+}
+
+/**
+ * Build a commit-search query. Window is always author-date based when bounded.
+ * Unbounded = all indexed public commits attributed to the user (typically default branches).
+ * @param {string} username
+ * @param {{ since?: string, until?: string }} [range] YYYY-MM-DD
+ */
+function buildCommitSearchQuery(username, range = {}) {
+  let q = `author:${username}`;
+  const { since, until } = range;
+  if (since || until) {
+    q += ` author-date:${since || "*"}..${until || "*"}`;
+  }
+  return q;
+}
+
+async function searchCommitCount(username, range) {
+  const q = buildCommitSearchQuery(username, range);
+  const data = await ghFetch(
+    `${GITHUB_API}/search/commits?q=${encodeURIComponent(q)}&per_page=1`
+  );
+  return data.total_count || 0;
+}
+
 async function fetchYears(login) {
   const data = await graphql(
     `query($login: String!) {
@@ -146,10 +190,6 @@ async function fetchStatsGraphQL(username) {
         avatarUrl
         url
         followers { totalCount }
-        repositoriesContributedTo(
-          first: 1
-          contributionTypes: [COMMIT, ISSUE, PULL_REQUEST, REPOSITORY]
-        ) { totalCount }
         pullRequests { totalCount }
         mergedPullRequests: pullRequests(states: MERGED) { totalCount }
         closedPullRequests: pullRequests(states: CLOSED) { totalCount }
@@ -185,15 +225,31 @@ async function fetchStatsGraphQL(username) {
     throw err;
   }
 
+  // All-time window: sum each contribution year. Use commit contributions only —
+  // restrictedContributionsCount mixes private activity types and is not commit-pure.
   let totalCommits = 0;
-  let totalReviews = 0;
+  let graphqlReviews = 0;
   for (const year of years) {
     const block = user[`y${year}`];
     if (!block) continue;
-    totalCommits +=
-      (block.totalCommitContributions || 0) +
-      (block.restrictedContributionsCount || 0);
-    totalReviews += block.totalPullRequestReviewContributions || 0;
+    totalCommits += block.totalCommitContributions || 0;
+    graphqlReviews += block.totalPullRequestReviewContributions || 0;
+  }
+
+  // Prefer search for all-time reviews + contributed-to (GraphQL contrib list is "recent" only).
+  let totalReviews = graphqlReviews;
+  let contributedTo = 0;
+  let reviewsSource = "graphql-contributions";
+  let contribSource = "unavailable";
+  try {
+    const collab = await fetchCollaborationStats(username);
+    totalReviews = collab.totalReviews;
+    contributedTo = collab.contributedTo;
+    reviewsSource = collab.reviewsSource;
+    contribSource = collab.contribSource;
+  } catch {
+    totalReviews = graphqlReviews;
+    reviewsSource = "graphql-contributions";
   }
 
   let totalStars = 0;
@@ -278,10 +334,14 @@ async function fetchStatsGraphQL(username) {
     closedIssues: user.closedIssues.totalCount,
     totalIssues: user.openIssues.totalCount + user.closedIssues.totalCount,
     totalReviews,
-    contributedTo: user.repositoriesContributedTo.totalCount,
+    contributedTo,
     followers: user.followers.totalCount,
     publicRepos: user.repositories.totalCount,
     topLanguages,
+    commitsWindow: "all-time",
+    commitsSource: "graphql-contributions",
+    reviewsSource,
+    contribSource,
     source: "graphql",
   };
 }
@@ -291,6 +351,82 @@ async function searchCount(query) {
     `${GITHUB_API}/search/issues?q=${encodeURIComponent(query)}&per_page=1`
   );
   return data.total_count || 0;
+}
+
+/** owner/repo from issue/PR search item.repository_url */
+function repoFullNameFromIssue(item) {
+  const m = String(item?.repository_url || "").match(
+    /\/repos\/([^/]+\/[^/]+)$/
+  );
+  return m ? m[1] : "";
+}
+
+async function searchIssueRepoNames(query, { maxPages = 2 } = {}) {
+  const repos = new Set();
+  for (let page = 1; page <= maxPages; page++) {
+    const data = await ghFetch(
+      `${GITHUB_API}/search/issues?q=${encodeURIComponent(query)}&per_page=100&page=${page}`
+    );
+    const items = data.items || [];
+    for (const item of items) {
+      const name = repoFullNameFromIssue(item);
+      if (name) repos.add(name);
+    }
+    if (items.length < 100) break;
+  }
+  return repos;
+}
+
+async function searchCommitRepoNames(query, { maxPages = 2 } = {}) {
+  const repos = new Set();
+  for (let page = 1; page <= maxPages; page++) {
+    const data = await ghFetch(
+      `${GITHUB_API}/search/commits?q=${encodeURIComponent(query)}&per_page=100&page=${page}`
+    );
+    const items = data.items || [];
+    for (const item of items) {
+      const name = item.repository?.full_name;
+      if (name) repos.add(name);
+    }
+    if (items.length < 100) break;
+  }
+  return repos;
+}
+
+/**
+ * All-time collaboration metrics via search (works with or without a token).
+ * Reviews = PRs where the user left a review (includes reviews on own repos).
+ * Contributed to = distinct repos the user does not own with public commits,
+ * authored issues/PRs, or comments.
+ */
+async function fetchCollaborationStats(username) {
+  const [
+    totalReviews,
+    prRepos,
+    issueRepos,
+    commentRepos,
+    commitRepos,
+  ] = await Promise.all([
+    searchCount(`type:pr reviewed-by:${username}`),
+    searchIssueRepoNames(`author:${username} type:pr -user:${username}`),
+    searchIssueRepoNames(`author:${username} type:issue -user:${username}`),
+    searchIssueRepoNames(`commenter:${username} -user:${username}`),
+    searchCommitRepoNames(`author:${username} -user:${username}`),
+  ]);
+
+  const repos = new Set([
+    ...prRepos,
+    ...issueRepos,
+    ...commentRepos,
+    ...commitRepos,
+  ]);
+
+  return {
+    totalReviews,
+    contributedTo: repos.size,
+    reviewsSource: "search",
+    contribSource: "search",
+  };
 }
 
 async function fetchStatsREST(username) {
@@ -360,26 +496,42 @@ async function fetchStatsREST(username) {
       percent: Math.round((count / totalLang) * 1000) / 10,
     }));
 
-  const [totalPRs, mergedPRs, closedIssues, openIssues] = await Promise.all([
+  const [
+    totalPRs,
+    mergedPRs,
+    closedIssues,
+    openIssues,
+    collab,
+  ] = await Promise.all([
     searchCount(`author:${username} type:pr`),
     searchCount(`author:${username} type:pr is:merged`),
     searchCount(`author:${username} type:issue is:closed`),
     searchCount(`author:${username} type:issue is:open`),
+    fetchCollaborationStats(username).catch(() => ({
+      totalReviews: 0,
+      contributedTo: 0,
+      reviewsSource: "unavailable",
+      contribSource: "unavailable",
+    })),
   ]);
 
-  // REST cannot get lifetime commits without many calls; approximate via events
+  // Commits: search API is all-time (indexed public commits). Public PushEvent
+  // payloads often omit commits/size now, so events are a last-resort fallback only.
   let totalCommits = 0;
+  let commitsSource = "unavailable";
   try {
-    const events = await ghFetch(
-      `${GITHUB_API}/users/${username}/events/public?per_page=100`
-    );
-    for (const event of events) {
-      if (event.type === "PushEvent" && event.payload?.commits) {
-        totalCommits += event.payload.commits.length;
-      }
-    }
+    totalCommits = await searchCommitCount(username);
+    commitsSource = "search";
   } catch {
-    /* ignore */
+    try {
+      const events = await ghFetch(
+        `${GITHUB_API}/users/${username}/events/public?per_page=100`
+      );
+      totalCommits = countCommitsFromPushEvents(events);
+      commitsSource = "events-recent";
+    } catch {
+      /* leave zero */
+    }
   }
 
   return {
@@ -395,14 +547,19 @@ async function fetchStatsREST(username) {
     openIssues,
     closedIssues,
     totalIssues: openIssues + closedIssues,
-    totalReviews: 0,
-    contributedTo: 0,
+    totalReviews: collab.totalReviews,
+    contributedTo: collab.contributedTo,
     followers: user.followers || 0,
     publicRepos: user.public_repos || owned.length,
     topLanguages,
+    commitsWindow: "all-time",
+    commitsSource,
+    reviewsSource: collab.reviewsSource,
+    contribSource: collab.contribSource,
     source: "rest",
     partial: true,
-    note: "Set GITHUB_TOKEN for full commit history, reviews, and contributed-to counts.",
+    note:
+      "Public REST stats: commits/reviews/contributed-to use GitHub search (all-time, public/indexed). Set GITHUB_TOKEN for GraphQL contribution commits and higher rate limits.",
   };
 }
 
@@ -459,4 +616,13 @@ function isTokenActive() {
   return Boolean(getToken());
 }
 
-module.exports = { fetchUserStats, clearCache, getToken, isTokenActive };
+module.exports = {
+  fetchUserStats,
+  clearCache,
+  getToken,
+  isTokenActive,
+  // Test helpers
+  countCommitsFromPushEvents,
+  buildCommitSearchQuery,
+  repoFullNameFromIssue,
+};

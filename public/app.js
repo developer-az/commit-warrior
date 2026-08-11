@@ -111,9 +111,13 @@
       embed.hidden = false;
       generator.scrollIntoView({ behavior: "smooth", block: "start" });
 
+      const windowNote =
+        data.commitsWindow === "all-time"
+          ? " Commits, reviews, and contributed-to are all-time (not limited to this week/month)."
+          : "";
       const note = data.partial
-        ? " Loaded public REST stats. Server GITHUB_TOKEN unlocks full commit history."
-        : " Full GraphQL stats loaded.";
+        ? ` Loaded public REST stats.${windowNote} Server GITHUB_TOKEN unlocks GraphQL contribution commits and higher rate limits.`
+        : ` Full GraphQL stats loaded.${windowNote}`;
       setStatus(`Stats for @${data.login}.${note}`, "ok");
 
       const url = new URL(window.location.href);
