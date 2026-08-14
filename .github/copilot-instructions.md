@@ -33,7 +33,7 @@ Commit Warrior is a **Node/Express web app** that generates GitHub README stats.
 - `src/cards/streak.js` — Streak SVG renderer
 - `src/cards/graph.js` — Contribution heatmap SVG renderer
 - `src/streak.js` — Calendar parse + streak math
-- `src/insights.js` — Today/yesterday status + employer-facing copy
+- `src/insights.js` — Today vs yesterday plus compact highlights
 - `public/` — Website (username form, live preview, markdown copy)
 - `test/` — Unit tests
 
@@ -61,7 +61,7 @@ SVG responses use `Content-Type: image/svg+xml` and `Cache-Control: public, max-
 5. With `GITHUB_TOKEN`, confirm `source: "graphql"` in `/api/json` and non-zero commit totals for active users
 
 ## Design notes for the website
-- Brand-first hero (“Commit Warrior”), Fraunces + IBM Plex Sans, brass on navy — professional hiring-review tone, not neon/matrix or purple/cream defaults
-- First viewport: brand, one headline, one lede, username CTA — no stat dumps in the hero
-- After lookup: live today-vs-yesterday board, written brief, insight cards, then totals and README embeds
-- Missing data is labeled (“Not published yet”, 0 with a hint) — never blank
+- Brand-first hero (“Commit Warrior”), Fraunces + IBM Plex Sans, brass on navy
+- First viewport: brand, one line of purpose, username field
+- After lookup: today vs yesterday, a few highlights, totals, README cards
+- Short labels only. No essays under metrics.

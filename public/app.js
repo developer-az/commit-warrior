@@ -58,19 +58,19 @@
   }
 
   function formatWhen(iso) {
-    if (!iso) return "just now";
+    if (!iso) return "";
     try {
       return new Intl.DateTimeFormat(undefined, {
-        dateStyle: "medium",
-        timeStyle: "short",
+        hour: "numeric",
+        minute: "2-digit",
       }).format(new Date(iso));
     } catch {
-      return iso;
+      return "";
     }
   }
 
   function formatDay(iso) {
-    if (!iso) return "—";
+    if (!iso) return "";
     try {
       return new Intl.DateTimeFormat(undefined, {
         month: "short",
@@ -83,17 +83,15 @@
 
   function friendlyError(message) {
     const msg = String(message || "");
-    if (/not found/i.test(msg)) {
-      return "No GitHub user by that name. Check the spelling — usernames use letters, numbers, and hyphens.";
-    }
+    if (/not found/i.test(msg)) return "No GitHub user with that name.";
     if (/invalid github username/i.test(msg)) {
-      return "That doesn’t look like a GitHub username. Use letters, numbers, and hyphens only.";
+      return "Usernames are letters, numbers, and hyphens.";
     }
     if (/401|bad credentials/i.test(msg)) {
-      return "GitHub rejected a server credential. Public lookups should still work — try again in a moment.";
+      return "GitHub login on the server failed. Try again shortly.";
     }
     if (/403|rate limit/i.test(msg)) {
-      return "GitHub is rate-limiting lookups right now. Wait a minute and try again.";
+      return "GitHub rate limit hit. Wait a minute.";
     }
     return msg || "Could not load this profile.";
   }
@@ -103,75 +101,61 @@
     statusLine.className = `hero-hint${type ? ` ${type}` : ""}`;
   }
 
-  function deltaHint(delta, todayPublished) {
-    if (!todayPublished) return { text: "Today not published yet", cls: "" };
-    if (delta === 0) return { text: "Same as yesterday", cls: "" };
-    if (delta > 0) return { text: `+${formatNum(delta)} vs yesterday`, cls: "up" };
-    return { text: `${formatNum(delta)} vs yesterday`, cls: "down" };
-  }
-
   function renderRecent(stats) {
     const recent = stats.recent || {};
     const chip = document.getElementById("status-chip");
-    chip.textContent = recent.headline || "Status unavailable";
+    chip.textContent = recent.headline || "No calendar";
     chip.className = `status-chip ${recent.status || "idle"}`;
 
-    document.getElementById("recent-detail").textContent =
-      recent.detail ||
-      "Contribution calendar did not load; career totals below are still from GitHub.";
-
     const served = document.getElementById("served-at");
+    const when = formatWhen(stats.servedAt || recent.generatedAt);
     served.dateTime = stats.servedAt || recent.generatedAt || "";
-    served.textContent = `Served ${formatWhen(stats.servedAt || recent.generatedAt)}`;
+    served.textContent = when ? when : "";
     document.getElementById("live-label").textContent = stats.cached
-      ? "Live (cached GitHub data)"
+      ? "Cached"
       : "Live";
 
-    const todayLabel = recent.todayPublished
-      ? formatNum(recent.todayCount)
-      : "—";
-    const yHint = recent.yesterdayPublished
-      ? `${formatDay(recent.yesterday)}`
-      : "Not on calendar yet";
-    const change = deltaHint(Number(recent.delta) || 0, recent.todayPublished);
+    const todayValue = recent.todayPublished ? formatNum(recent.todayCount) : "n/a";
+    const changeValue = recent.todayPublished
+      ? `${Number(recent.delta) > 0 ? "+" : ""}${formatNum(recent.delta)}`
+      : "n/a";
 
     const cards = [
       {
-        kicker: "Today",
-        value: todayLabel,
-        hint: recent.todayPublished
-          ? formatDay(recent.today)
-          : "GitHub has not closed this day",
+        label: "Today",
+        value: todayValue,
+        note: formatDay(recent.today),
       },
       {
-        kicker: "Yesterday",
+        label: "Yesterday",
         value: formatNum(recent.yesterdayCount),
-        hint: yHint,
+        note: formatDay(recent.yesterday),
       },
       {
-        kicker: "Change",
-        value: recent.todayPublished
-          ? `${Number(recent.delta) > 0 ? "+" : ""}${formatNum(recent.delta)}`
-          : "—",
-        hint: change.text,
-        hintClass: change.cls,
+        label: "Change",
+        value: changeValue,
+        note: recent.todayPublished ? "vs yesterday" : "today pending",
+        tone:
+          recent.todayPublished && Number(recent.delta) > 0
+            ? "up"
+            : recent.todayPublished && Number(recent.delta) < 0
+              ? "down"
+              : "",
       },
       {
-        kicker: "Last 7 days",
+        label: "Last 7 days",
         value: formatNum(recent.last7Count),
-        hint: `${formatNum(recent.last7ActiveDays)} active day${
-          Number(recent.last7ActiveDays) === 1 ? "" : "s"
-        }`,
+        note: `${formatNum(recent.last7ActiveDays)} active`,
       },
     ];
 
     document.getElementById("delta-board").innerHTML = cards
       .map(
-        (c) => `<article class="delta-card">
-          <span class="kicker">${c.kicker}</span>
-          <strong>${c.value}</strong>
-          <span class="hint ${c.hintClass || ""}">${c.hint}</span>
-        </article>`
+        (c) => `<div class="stat">
+          <span class="label">${c.label}</span>
+          <strong class="${c.tone || ""}">${c.value}</strong>
+          <span class="note">${c.note || ""}</span>
+        </div>`
       )
       .join("");
 
@@ -181,58 +165,56 @@
   function renderSparkline(days) {
     const host = document.getElementById("sparkline");
     if (!days.length) {
-      host.innerHTML = `<p class="hint">No last-14-day calendar points yet.</p>`;
+      host.innerHTML = "";
       return;
     }
-    const w = 640;
-    const h = 56;
+    const w = 720;
+    const h = 48;
     const max = Math.max(1, ...days.map((d) => Number(d.count) || 0));
-    const gap = 4;
+    const gap = 5;
     const barW = (w - gap * (days.length - 1)) / days.length;
     const bars = days
       .map((d, i) => {
         const count = Number(d.count) || 0;
-        const bh = Math.max(count ? 4 : 2, (count / max) * (h - 8));
+        const bh = Math.max(count ? 5 : 2, (count / max) * (h - 6));
         const x = i * (barW + gap);
         const y = h - bh;
         const fill = count ? "#d4b483" : "#2a3340";
-        const title = `${d.date}: ${count} contribution${count === 1 ? "" : "s"}`;
-        return `<rect x="${x}" y="${y}" width="${barW}" height="${bh}" rx="1.5" fill="${fill}"><title>${title}</title></rect>`;
+        return `<rect x="${x}" y="${y}" width="${barW}" height="${bh}" rx="1.5" fill="${fill}"><title>${d.date}: ${count}</title></rect>`;
       })
       .join("");
-    host.innerHTML = `<svg class="sparkline" viewBox="0 0 ${w} ${h}" role="img" aria-label="Last 14 days of contributions">${bars}</svg>`;
+    host.innerHTML = `<svg class="sparkline" viewBox="0 0 ${w} ${h}" role="img" aria-label="Last 14 days">${bars}</svg>`;
   }
 
-  function renderInsights(stats) {
-    const items = stats.insights || [];
-    document.getElementById("insights").innerHTML = items
+  function renderHighlights(stats) {
+    const host = document.getElementById("highlights");
+    const items = stats.highlights || [];
+    host.innerHTML = items
       .map(
-        (item) => `<article class="insight">
-          <span class="kicker">${item.kicker || "Note"}</span>
-          <h3>${item.title || "—"}</h3>
-          <p>${item.body || "No additional context for this signal."}</p>
-        </article>`
+        (item) => `<div class="stat">
+          <span class="label">${item.label}</span>
+          <strong>${item.value}</strong>
+        </div>`
       )
       .join("");
   }
 
   function renderMetrics(stats) {
     const catalog = [
-      ["Commits", stats.totalCommits, "All-time public commits attributed to this username."],
-      ["Pull requests", stats.totalPRs, "PRs they opened — proposing a change."],
-      ["PRs merged", stats.mergedPRs, "PRs that actually landed. The shipping number."],
-      ["Issues closed", stats.closedIssues, "Issues they opened that are now closed."],
-      ["Code reviews", stats.totalReviews, "Pull requests they reviewed."],
-      ["Repos contributed to", stats.contributedTo, "Public repos they don’t own, with commits, issues, PRs, or comments."],
-      ["Stars earned", stats.totalStars, "Stars on owned, non-fork repositories."],
-      ["Year contributions", stats.yearContributions, "GitHub calendar total for the last 12 months."],
+      ["Commits", stats.totalCommits],
+      ["Pull requests", stats.totalPRs],
+      ["PRs merged", stats.mergedPRs],
+      ["Issues closed", stats.closedIssues],
+      ["Reviews", stats.totalReviews],
+      ["Repos contributed to", stats.contributedTo],
+      ["Stars", stats.totalStars],
+      ["This year", stats.yearContributions],
     ];
     document.getElementById("metrics").innerHTML = catalog
       .map(
-        ([label, value, hint]) => `<div class="metric">
-          <strong>${formatNum(value)}</strong>
+        ([label, value]) => `<div class="stat">
           <span class="label">${label}</span>
-          <span class="hint">${hint}</span>
+          <strong>${formatNum(value)}</strong>
         </div>`
       )
       .join("");
@@ -244,16 +226,10 @@
     document.getElementById("langs-card").src = `${langsUrl(username)}&_=${bust}`;
     document.getElementById("streak-card").src = `${streakUrl(username)}&_=${bust}`;
     document.getElementById("graph-card").src = `${graphUrl(username)}&_=${bust}`;
-    document.getElementById("stats-url").textContent = statsUrl(username);
-    document.getElementById("langs-url").textContent = langsUrl(username);
-    document.getElementById("streak-url").textContent = streakUrl(username);
-    document.getElementById("graph-url").textContent = graphUrl(username);
-
-    const md = `[![${username}'s GitHub stats](${statsUrl(username)})](https://github.com/${username})
+    document.getElementById("markdown-output").textContent = `[![${username}'s GitHub stats](${statsUrl(username)})](https://github.com/${username})
 ![Top Languages](${langsUrl(username)})
 ![GitHub Streak](${streakUrl(username)})
 ![Contribution Graph](${graphUrl(username)})`;
-    document.getElementById("markdown-output").textContent = md;
   }
 
   async function loadUser(username) {
@@ -263,7 +239,7 @@
     generateBtn.disabled = true;
     const btnLabel = generateBtn.querySelector("span");
     if (btnLabel) btnLabel.textContent = "Loading…";
-    setStatus("Fetching live GitHub activity…", "");
+    setStatus("Looking up GitHub…", "");
 
     try {
       const res = await fetch(`/api/json?username=${encodeURIComponent(clean)}`);
@@ -274,32 +250,23 @@
       document.getElementById("avatar").src = data.avatarUrl || "";
       document.getElementById("avatar").alt = `${data.login} avatar`;
       document.getElementById("profile-name").textContent =
-        data.name || data.login || "Unknown profile";
+        data.name || data.login;
       const link = document.getElementById("profile-link");
       link.href = data.url || `https://github.com/${data.login}`;
       link.textContent = `@${data.login}`;
-      document.getElementById("rank-pill").textContent = `Grade ${
-        data.rank?.level || "—"
-      }`;
-      document.getElementById("rank-note").textContent =
-        data.insights?.find((i) => i.kicker === "Public rank")?.body ||
-        "Public rank is a weighted reading of commits, PRs, issues, reviews, stars, and followers.";
-      document.getElementById("brief").textContent =
-        data.brief || "Public GitHub totals loaded for this username.";
+      document.getElementById("rank-pill").textContent = data.rank?.level
+        ? data.rank.level
+        : "";
 
       renderRecent(data);
-      renderInsights(data);
+      renderHighlights(data);
       renderMetrics(data);
       updatePreview(data.login);
 
       generator.hidden = false;
       embed.hidden = false;
       generator.scrollIntoView({ behavior: "smooth", block: "start" });
-
-      setStatus(
-        `Loaded @${data.login}. Today vs yesterday is from GitHub’s contribution calendar; career totals are all-time.`,
-        "ok"
-      );
+      setStatus(`Loaded @${data.login}.`, "ok");
 
       const url = new URL(window.location.href);
       url.searchParams.set("username", data.login);
@@ -310,7 +277,7 @@
       embed.hidden = true;
     } finally {
       generateBtn.disabled = false;
-      if (btnLabel) btnLabel.textContent = "Review this profile";
+      if (btnLabel) btnLabel.textContent = "Look up";
     }
   }
 
@@ -350,7 +317,7 @@
         document.execCommand("copy");
         flashCopied();
       } catch {
-        copyBtn.textContent = "Select & copy";
+        copyBtn.textContent = "Select text";
       }
     }
   });

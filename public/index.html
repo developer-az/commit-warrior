@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Commit Warrior — GitHub stats for profiles and hiring</title>
-  <meta name="description" content="Live GitHub engineering stats for READMEs and hiring reviews: commits, merged PRs, closed issues, reviews, streaks, and what changed since yesterday." />
+  <title>Commit Warrior</title>
+  <meta name="description" content="Look up a GitHub username. See today vs yesterday, career stats, and README cards." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,650&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560;9..144,650&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/styles.css" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 </head>
@@ -20,22 +20,15 @@
       Commit Warrior
     </a>
     <nav class="topnav">
-      <a href="#lookup">Lookup</a>
-      <a href="#why">For hiring</a>
       <a href="https://github.com/developer-az/commit-warrior" target="_blank" rel="noopener">GitHub</a>
     </nav>
   </header>
 
   <main>
     <section class="hero" id="lookup">
-      <p class="eyebrow">Public GitHub · live lookup</p>
       <p class="brand-hero">Commit Warrior</p>
-      <h1>Engineering activity you can actually read</h1>
-      <p class="lede">
-        Not a vanity counter. A concise brief of how someone ships: commits,
-        merged PRs, closed issues, reviews, and whether they were active
-        <em>yesterday and today</em>. Preview the cards, then paste them into a README.
-      </p>
+      <h1>GitHub stats for your README</h1>
+      <p class="lede">Enter a username. Check today against yesterday, then copy the cards.</p>
       <form class="hero-form" id="lookup-form" autocomplete="off">
         <label class="sr-only" for="username">GitHub username</label>
         <div class="input-shell">
@@ -44,154 +37,110 @@
             id="username"
             name="username"
             type="text"
-            placeholder="github-username"
+            placeholder="username"
             spellcheck="false"
             maxlength="39"
             required
           />
         </div>
         <button type="submit" id="generate-btn">
-          <span>Review this profile</span>
+          <span>Look up</span>
         </button>
       </form>
-      <p class="hero-hint" id="status-line">Public profiles load instantly. No token on this page.</p>
+      <p class="hero-hint" id="status-line">Public profiles only.</p>
     </section>
 
-    <section class="why" id="why">
-      <div class="section-head">
-        <h2>What a hiring manager can take from this</h2>
-        <p>Numbers without context are noise. Each figure is paired with what it usually means on a team.</p>
-      </div>
-      <div class="why-grid">
-        <article>
-          <h3>Follow-through</h3>
-          <p>Merged PRs and closed issues show whether work lands, not only whether it was opened.</p>
-        </article>
-        <article>
-          <h3>Collaboration</h3>
-          <p>Reviews and repos contributed to are how you spot teammates, not just solo committers.</p>
-        </article>
-        <article>
-          <h3>Current status</h3>
-          <p>Today vs yesterday is a live check that the profile — and this service — is actually updating.</p>
-        </article>
-      </div>
-    </section>
-
-    <section class="generator" id="generator" hidden>
-      <div class="live-bar" id="live-bar">
-        <span class="live-dot" aria-hidden="true"></span>
-        <span id="live-label">Live</span>
-        <span class="live-sep" aria-hidden="true">·</span>
-        <time id="served-at" datetime=""></time>
-        <span class="status-chip" id="status-chip">Status</span>
-      </div>
-
-      <div class="profile-strip" id="profile-strip">
-        <img id="avatar" alt="" width="56" height="56" />
+    <section class="report" id="generator" hidden>
+      <div class="profile-strip">
+        <img id="avatar" alt="" width="48" height="48" />
         <div>
           <p class="profile-name" id="profile-name"></p>
           <a class="profile-link" id="profile-link" target="_blank" rel="noopener"></a>
         </div>
-        <div class="rank-block">
-          <span class="rank-pill" id="rank-pill">Grade —</span>
-          <span class="rank-note" id="rank-note"></span>
+        <div class="meta-right">
+          <span class="rank-pill" id="rank-pill"></span>
+          <span class="live-line">
+            <span class="live-dot" aria-hidden="true"></span>
+            <span id="live-label">Live</span>
+            <time id="served-at" datetime=""></time>
+          </span>
         </div>
       </div>
 
-      <p class="brief" id="brief"></p>
-
-      <div class="section-head tight">
-        <h2>Since yesterday</h2>
-        <p id="recent-detail">Public contribution days from GitHub’s calendar.</p>
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Today</h2>
+          <span class="status-chip" id="status-chip"></span>
+        </div>
+        <div class="delta-board" id="delta-board" aria-live="polite"></div>
+        <div id="sparkline" class="sparkline-host"></div>
       </div>
 
-      <div class="delta-board" id="delta-board" aria-live="polite"></div>
-      <div class="spark-wrap">
-        <p class="spark-label">Last 14 contribution days</p>
-        <div id="sparkline"></div>
-      </div>
-
-      <div class="insights" id="insights"></div>
-
-      <div class="section-head tight">
-        <h2>Career totals</h2>
-        <p>All-time public GitHub activity, with a one-line reading for each metric.</p>
-      </div>
+      <div class="highlights" id="highlights"></div>
       <div class="metrics" id="metrics"></div>
 
-      <div class="section-head tight">
-        <h2>README cards</h2>
-        <p>Same SVGs GitHub will fetch when someone opens the profile README.</p>
-      </div>
-
-      <div class="card-stage">
-        <figure class="card-frame">
-          <figcaption>Stats card</figcaption>
-          <img id="stats-card" alt="GitHub stats card preview" />
-        </figure>
-        <figure class="card-frame">
-          <figcaption>Top languages</figcaption>
-          <img id="langs-card" alt="Top languages card preview" />
-        </figure>
-        <figure class="card-frame">
-          <figcaption>Streak</figcaption>
-          <img id="streak-card" alt="Contribution streak card preview" />
-        </figure>
-        <figure class="card-frame span-full">
-          <figcaption>Contribution graph</figcaption>
-          <img id="graph-card" alt="Contribution graph preview" />
-        </figure>
-      </div>
-
-      <div class="controls">
-        <label>
-          Card theme
-          <select id="theme">
-            <option value="professional" selected>Professional</option>
-            <option value="default">GitHub green</option>
-            <option value="dark">Dark blue</option>
-            <option value="light">Light</option>
-            <option value="tokyonight">Tokyo Night</option>
-            <option value="radical">Radical</option>
-            <option value="transparent">Transparent</option>
-          </select>
-        </label>
-        <label class="check">
-          <input type="checkbox" id="show-icons" checked />
-          Icons
-        </label>
-        <label class="check">
-          <input type="checkbox" id="hide-rank" />
-          Hide rank
-        </label>
-        <label class="check">
-          <input type="checkbox" id="compact-langs" checked />
-          Compact languages
-        </label>
+      <div class="panel">
+        <div class="panel-head">
+          <h2>README cards</h2>
+          <div class="controls">
+            <label>
+              Theme
+              <select id="theme">
+                <option value="professional" selected>Professional</option>
+                <option value="default">GitHub</option>
+                <option value="dark">Dark</option>
+                <option value="light">Light</option>
+                <option value="tokyonight">Tokyo Night</option>
+                <option value="radical">Radical</option>
+                <option value="transparent">Transparent</option>
+              </select>
+            </label>
+            <label class="check">
+              <input type="checkbox" id="show-icons" checked />
+              Icons
+            </label>
+            <label class="check">
+              <input type="checkbox" id="hide-rank" />
+              Hide rank
+            </label>
+            <label class="check">
+              <input type="checkbox" id="compact-langs" checked />
+              Compact
+            </label>
+          </div>
+        </div>
+        <div class="card-stage">
+          <figure class="card-frame">
+            <figcaption>Stats</figcaption>
+            <img id="stats-card" alt="Stats card" />
+          </figure>
+          <figure class="card-frame">
+            <figcaption>Languages</figcaption>
+            <img id="langs-card" alt="Languages card" />
+          </figure>
+          <figure class="card-frame">
+            <figcaption>Streak</figcaption>
+            <img id="streak-card" alt="Streak card" />
+          </figure>
+          <figure class="card-frame span-full">
+            <figcaption>Graph</figcaption>
+            <img id="graph-card" alt="Contribution graph" />
+          </figure>
+        </div>
       </div>
     </section>
 
     <section class="embed" id="embed" hidden>
-      <div class="section-head">
-        <h2>Drop this into a README</h2>
-        <p>Profile README repo is <code>username/username</code>. GitHub loads these URLs as images.</p>
-      </div>
-      <div class="code-block">
-        <pre><code id="markdown-output"></code></pre>
+      <div class="panel-head">
+        <h2>Markdown</h2>
         <button type="button" class="copy-btn" id="copy-btn">Copy</button>
       </div>
-      <div class="urls">
-        <p><span>Stats</span> <code id="stats-url"></code></p>
-        <p><span>Languages</span> <code id="langs-url"></code></p>
-        <p><span>Streak</span> <code id="streak-url"></code></p>
-        <p><span>Graph</span> <code id="graph-url"></code></p>
-      </div>
+      <pre class="code-block"><code id="markdown-output"></code></pre>
     </section>
   </main>
 
   <footer class="footer">
-    <p>Commit Warrior is a professional GitHub stats service · <a href="https://github.com/developer-az/commit-warrior" target="_blank" rel="noopener">Source</a></p>
+    <p><a href="https://github.com/developer-az/commit-warrior" target="_blank" rel="noopener">Source</a></p>
   </footer>
 
   <script src="/app.js"></script>

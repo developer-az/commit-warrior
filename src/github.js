@@ -698,7 +698,7 @@ async function fetchUserStats(username) {
     followers: stats.followers,
   });
 
-  const { buildRecentActivity, buildInsights, buildBrief } = require("./insights");
+  const { buildRecentActivity, buildHighlights } = require("./insights");
 
   try {
     const calendar = await fetchContributionCalendar(login);
@@ -722,8 +722,7 @@ async function fetchUserStats(username) {
   }
 
   stats.recent = buildRecentActivity(stats.calendar || []);
-  stats.insights = buildInsights(stats);
-  stats.brief = buildBrief(stats);
+  stats.highlights = buildHighlights(stats);
 
   cacheSet(`stats:${login.toLowerCase()}`, stats);
   return stats;

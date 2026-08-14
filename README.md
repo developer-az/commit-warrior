@@ -15,7 +15,7 @@ npm start
 # → http://localhost:3000
 ```
 
-The website shows **today vs yesterday** (and the last 14 days) so you can see current status and that the lookup is live. Career totals stay all-time.
+The website shows today vs yesterday so you can tell the lookup is live. Career totals are all-time.
 
 ### 2. README embeds (preview / markdown image)
 

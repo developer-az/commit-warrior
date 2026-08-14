@@ -1,11 +1,7 @@
 const { describe, it } = require("node:test");
 const assert = require("node:assert/strict");
 const { parseContributionsHtml, parseTooltipCount } = require("../src/streak");
-const {
-  buildRecentActivity,
-  buildBrief,
-  buildInsights,
-} = require("../src/insights");
+const { buildRecentActivity, buildHighlights } = require("../src/insights");
 
 describe("parseTooltipCount", () => {
   it("reads exact and zero contribution tooltips", () => {
@@ -32,7 +28,7 @@ describe("parseContributionsHtml tooltips", () => {
 });
 
 describe("buildRecentActivity", () => {
-  it("compares today to yesterday and never leaves blanks", () => {
+  it("compares today to yesterday", () => {
     const days = [
       { date: "2026-08-12", count: 1, level: 1 },
       { date: "2026-08-13", count: 4, level: 2 },
@@ -40,14 +36,12 @@ describe("buildRecentActivity", () => {
     ];
     const recent = buildRecentActivity(days, new Date("2026-08-14T18:00:00Z"));
     assert.equal(recent.today, "2026-08-14");
-    assert.equal(recent.yesterday, "2026-08-13");
-    assert.equal(recent.todayCount, 6);
     assert.equal(recent.yesterdayCount, 4);
+    assert.equal(recent.todayCount, 6);
     assert.equal(recent.delta, 2);
     assert.equal(recent.status, "active");
+    assert.equal(recent.headline, "Active today");
     assert.equal(recent.last14.length, 14);
-    assert.ok(recent.headline);
-    assert.ok(recent.detail);
   });
 
   it("marks watch when yesterday was active and today is empty", () => {
@@ -57,36 +51,36 @@ describe("buildRecentActivity", () => {
     ];
     const recent = buildRecentActivity(days, new Date("2026-08-14T12:00:00Z"));
     assert.equal(recent.status, "watch");
+    assert.equal(recent.headline, "Active yesterday");
     assert.equal(recent.todayCount, 0);
-    assert.equal(recent.yesterdayCount, 3);
   });
 });
 
-describe("employer copy", () => {
-  it("builds a brief and insights without empty titles", () => {
-    const stats = {
-      name: "Ada",
-      login: "ada",
-      totalCommits: 100,
-      totalPRs: 10,
+describe("buildHighlights", () => {
+  it("returns compact facts without filler", () => {
+    const items = buildHighlights({
       mergedPRs: 8,
+      totalPRs: 10,
       totalReviews: 4,
-      closedIssues: 5,
-      totalIssues: 6,
-      yearContributions: 40,
       topLanguages: [{ name: "Go", percent: 70 }],
-      rank: { level: "A" },
-      recent: { last7ActiveDays: 3, last7Count: 9 },
-    };
-    const brief = buildBrief(stats);
-    assert.match(brief, /Ada/);
-    assert.match(brief, /80%/);
-    const insights = buildInsights(stats);
-    assert.equal(insights.length, 6);
-    for (const item of insights) {
-      assert.ok(item.title);
-      assert.ok(item.body);
-      assert.ok(item.kicker);
-    }
+      streak: { currentStreak: 3 },
+    });
+    assert.deepEqual(
+      items.map((i) => i.label),
+      ["PRs merged", "Reviews", "Top language", "Current streak"]
+    );
+    assert.equal(items[0].value, "80%");
+    assert.equal(items[2].value, "Go");
+  });
+
+  it("omits empty highlights", () => {
+    const items = buildHighlights({
+      mergedPRs: 0,
+      totalPRs: 0,
+      totalReviews: 0,
+      topLanguages: [],
+      streak: { currentStreak: 0 },
+    });
+    assert.equal(items.length, 0);
   });
 });
