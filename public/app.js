@@ -41,6 +41,20 @@
     return `${originBase()}/api/top-langs?${qs(params)}`;
   }
 
+  function streakUrl(username) {
+    return `${originBase()}/api/streak?${qs({
+      username,
+      theme: themeSelect.value,
+    })}`;
+  }
+
+  function graphUrl(username) {
+    return `${originBase()}/api/graph?${qs({
+      username,
+      theme: themeSelect.value,
+    })}`;
+  }
+
   function formatNum(n) {
     return new Intl.NumberFormat().format(Number(n) || 0);
   }
@@ -57,9 +71,9 @@
       ["PRs Merged", stats.mergedPRs],
       ["Issues Closed", stats.closedIssues],
       ["Code Reviews", stats.totalReviews],
+      ["Current Streak", stats.streak?.currentStreak],
+      ["Year Contributions", stats.yearContributions],
       ["Stars", stats.totalStars],
-      ["Contributed To", stats.contributedTo],
-      ["Followers", stats.followers],
     ];
     metrics.innerHTML = items
       .map(
@@ -71,15 +85,19 @@
 
   function updatePreview(username) {
     const bust = Date.now();
-    const stats = `${statsUrl(username)}&_=${bust}`;
-    const langs = `${langsUrl(username)}&_=${bust}`;
-    document.getElementById("stats-card").src = stats;
-    document.getElementById("langs-card").src = langs;
+    document.getElementById("stats-card").src = `${statsUrl(username)}&_=${bust}`;
+    document.getElementById("langs-card").src = `${langsUrl(username)}&_=${bust}`;
+    document.getElementById("streak-card").src = `${streakUrl(username)}&_=${bust}`;
+    document.getElementById("graph-card").src = `${graphUrl(username)}&_=${bust}`;
     document.getElementById("stats-url").textContent = statsUrl(username);
     document.getElementById("langs-url").textContent = langsUrl(username);
+    document.getElementById("streak-url").textContent = streakUrl(username);
+    document.getElementById("graph-url").textContent = graphUrl(username);
 
     const md = `[![${username}'s GitHub stats](${statsUrl(username)})](https://github.com/${username})
-![Top Languages](${langsUrl(username)})`;
+![Top Languages](${langsUrl(username)})
+![GitHub Streak](${streakUrl(username)})
+![Contribution Graph](${graphUrl(username)})`;
     document.getElementById("markdown-output").textContent = md;
   }
 
@@ -88,6 +106,8 @@
     if (!clean) return;
 
     generateBtn.disabled = true;
+    const btnLabel = generateBtn.querySelector("span");
+    if (btnLabel) btnLabel.textContent = "Loading…";
     setStatus("Fetching GitHub activity…", "");
 
     try {
@@ -129,6 +149,8 @@
       embed.hidden = true;
     } finally {
       generateBtn.disabled = false;
+      const btnLabel = generateBtn.querySelector("span");
+      if (btnLabel) btnLabel.textContent = "Show my stats";
     }
   }
 

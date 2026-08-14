@@ -1,6 +1,6 @@
 # Commit Warrior
 
-Dynamically generated **GitHub README stats** — commits, pull requests, merged PRs, closed issues, code reviews, stars, and top languages. Use it as a website or embed SVG cards in any profile README.
+Dynamically generated **GitHub README stats** — commits, pull requests, merged PRs, closed issues, code reviews, streaks, contribution graphs, stars, and top languages. Use it as a website or embed SVG cards in any profile README.
 
 ## Two ways to use it
 
@@ -24,6 +24,8 @@ Same idea as [github-readme-stats](https://github.com/anuraghazra/github-readme-
 ```md
 [![GitHub stats](https://YOUR_HOST/api/stats?username=YOUR_USERNAME&show_icons=true)](https://github.com/YOUR_USERNAME)
 ![Top Languages](https://YOUR_HOST/api/top-langs?username=YOUR_USERNAME&layout=compact)
+![GitHub Streak](https://YOUR_HOST/api/streak?username=YOUR_USERNAME)
+![Contribution Graph](https://YOUR_HOST/api/graph?username=YOUR_USERNAME)
 ```
 
 Replace `YOUR_HOST` with your deployment URL (or `http://localhost:3000` while testing).
@@ -41,6 +43,8 @@ Replace `YOUR_HOST` with your deployment URL (or `http://localhost:3000` while t
 | Contributed to | Distinct repos you don’t own with public commits, authored issues/PRs, or comments |
 | Top Languages | Language mix across owned repos |
 | Rank | Weighted score (S → C) from the metrics above |
+| Current / longest streak | Consecutive contribution days (commits, PRs, issues — GitHub’s calendar) |
+| Contribution graph | Last-year heatmap, same shape as the profile calendar |
 
 ## API
 
@@ -48,6 +52,8 @@ Replace `YOUR_HOST` with your deployment URL (or `http://localhost:3000` while t
 | --- | --- |
 | `GET /api/stats?username=` | Stats SVG card |
 | `GET /api/top-langs?username=` | Top languages SVG card |
+| `GET /api/streak?username=` | Total / current / longest streak SVG |
+| `GET /api/graph?username=` | Contribution heatmap SVG |
 | `GET /api/json?username=` | JSON used by the website |
 | `GET /api/health` | Health + whether a token is configured |
 
@@ -68,6 +74,12 @@ Replace `YOUR_HOST` with your deployment URL (or `http://localhost:3000` while t
 - `theme` — same themes
 - `layout` — `normal` or `compact`
 - `langs_count` — number of languages (default 6)
+- `hide_border` — `true` / `false`
+
+**Streak / graph** (`/api/streak`, `/api/graph`)
+
+- `username` (required)
+- `theme` — same themes
 - `hide_border` — `true` / `false`
 
 ## GitHub token (recommended)

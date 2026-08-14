@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/styles.css" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 </head>
 <body>
   <div class="atmosphere" aria-hidden="true"></div>
@@ -30,7 +31,7 @@
       <p class="brand-hero">Commit Warrior</p>
       <h1>Professional GitHub stats for your README</h1>
       <p class="lede">
-        Commits, merged PRs, closed issues, reviews, stars — the engineering
+        Commits, merged PRs, closed issues, reviews, streaks — the engineering
         footprint that belongs on a profile. Type a username, preview the cards,
         paste one line of markdown.
       </p>
@@ -81,6 +82,14 @@
           <figcaption>Top languages</figcaption>
           <img id="langs-card" alt="Top languages card preview" />
         </figure>
+        <figure class="card-frame">
+          <figcaption>Streak</figcaption>
+          <img id="streak-card" alt="Contribution streak card preview" />
+        </figure>
+        <figure class="card-frame span-full">
+          <figcaption>Contribution graph</figcaption>
+          <img id="graph-card" alt="Contribution graph preview" />
+        </figure>
       </div>
 
       <div class="controls">
@@ -122,6 +131,8 @@
       <div class="urls">
         <p><span>Stats URL</span> <code id="stats-url"></code></p>
         <p><span>Languages URL</span> <code id="langs-url"></code></p>
+        <p><span>Streak URL</span> <code id="streak-url"></code></p>
+        <p><span>Graph URL</span> <code id="graph-url"></code></p>
       </div>
     </section>
 
@@ -133,7 +144,7 @@
       <ol class="steps">
         <li>
           <strong>You enter a username</strong>
-          <span>We query GitHub for commits, PRs, merged work, issues, reviews, stars, and languages.</span>
+          <span>We query GitHub for commits, PRs, merged work, issues, reviews, streaks, and languages.</span>
         </li>
         <li>
           <strong>SVG cards are rendered on demand</strong>

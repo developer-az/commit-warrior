@@ -157,6 +157,98 @@ async function searchCommitCount(username, range) {
   return data.total_count || 0;
 }
 
+async function fetchCalendarGraphQL(username) {
+  const data = await graphql(
+    `query($login: String!) {
+      user(login: $login) {
+        contributionsCollection {
+          contributionCalendar {
+            totalContributions
+            weeks {
+              contributionDays {
+                date
+                contributionCount
+                contributionLevel
+              }
+            }
+          }
+        }
+      }
+    }`,
+    { login: username }
+  );
+  const user = data.user;
+  if (!user) {
+    const err = new Error(`User "${username}" not found`);
+    err.status = 404;
+    throw err;
+  }
+  const { calendarFromGraphQL, computeStreaks } = require("./streak");
+  const parsed = calendarFromGraphQL(user.contributionsCollection);
+  return {
+    ...parsed,
+    streak: computeStreaks(parsed.days),
+    source: "graphql",
+  };
+}
+
+async function fetchCalendarHTML(username) {
+  const res = await fetch(
+    `https://github.com/users/${encodeURIComponent(username)}/contributions`,
+    {
+      headers: {
+        Accept: "text/html",
+        "User-Agent": "CommitWarrior-Stats/2.0",
+      },
+    }
+  );
+  if (res.status === 404) {
+    const err = new Error(`User "${username}" not found`);
+    err.status = 404;
+    throw err;
+  }
+  if (!res.ok) {
+    const err = new Error(`GitHub contributions page ${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
+  const html = await res.text();
+  const { parseContributionsHtml, computeStreaks } = require("./streak");
+  const parsed = parseContributionsHtml(html);
+  if (!parsed.days.length) {
+    throw new Error("Could not parse contribution calendar");
+  }
+  const streak = computeStreaks(parsed.days);
+  // Prefer GitHub's yearly heading over estimated cell counts
+  streak.total = parsed.total;
+  return {
+    days: parsed.days,
+    total: parsed.total,
+    streak,
+    source: "html",
+  };
+}
+
+async function fetchContributionCalendar(username) {
+  const key = `cal:${username.toLowerCase()}`;
+  const cached = cacheGet(key);
+  if (cached) return cached;
+
+  let cal;
+  if (getToken()) {
+    try {
+      cal = await fetchCalendarGraphQL(username);
+    } catch (err) {
+      if (err.status === 404) throw err;
+      cal = await fetchCalendarHTML(username);
+    }
+  } else {
+    cal = await fetchCalendarHTML(username);
+  }
+  cacheSet(key, cal);
+  return cal;
+}
+
 async function fetchYears(login) {
   const data = await graphql(
     `query($login: String!) {
@@ -604,6 +696,23 @@ async function fetchUserStats(username) {
     followers: stats.followers,
   });
 
+  try {
+    const calendar = await fetchContributionCalendar(login);
+    stats.calendar = calendar.days;
+    stats.yearContributions = calendar.total;
+    stats.streak = calendar.streak;
+    stats.calendarSource = calendar.source;
+  } catch (err) {
+    stats.calendar = [];
+    stats.yearContributions = 0;
+    stats.streak = {
+      total: 0,
+      currentStreak: 0,
+      longestStreak: 0,
+    };
+    stats.calendarError = err.message;
+  }
+
   cacheSet(`stats:${login.toLowerCase()}`, stats);
   return stats;
 }
@@ -618,6 +727,7 @@ function isTokenActive() {
 
 module.exports = {
   fetchUserStats,
+  fetchContributionCalendar,
   clearCache,
   getToken,
   isTokenActive,

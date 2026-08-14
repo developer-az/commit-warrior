@@ -30,6 +30,9 @@ Commit Warrior is a **Node/Express web app** that generates GitHub README stats.
 - `src/rank.js` — S–C rank from weighted percentiles
 - `src/cards/stats.js` — Stats SVG renderer
 - `src/cards/languages.js` — Top-languages SVG renderer
+- `src/cards/streak.js` — Streak SVG renderer
+- `src/cards/graph.js` — Contribution heatmap SVG renderer
+- `src/streak.js` — Calendar parse + streak math
 - `public/` — Website (username form, live preview, markdown copy)
 - `test/` — Unit tests
 
@@ -41,6 +44,8 @@ Commit Warrior is a **Node/Express web app** that generates GitHub README stats.
 ```
 GET /api/stats?username=USER&theme=default&show_icons=true
 GET /api/top-langs?username=USER&layout=compact&theme=default
+GET /api/streak?username=USER&theme=default
+GET /api/graph?username=USER&theme=default
 GET /api/json?username=USER
 ```
 

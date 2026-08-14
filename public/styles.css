@@ -373,6 +373,10 @@ button {
   align-items: start;
 }
 
+.card-stage .span-full {
+  grid-column: 1 / -1;
+}
+
 .card-frame {
   margin: 0;
   padding: 0;
