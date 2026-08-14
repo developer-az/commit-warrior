@@ -89,24 +89,46 @@ function computeStreaks(days, today = utcToday()) {
  * Cells expose data-date + data-level (0–4). Exact counts come from adjacent tooltips
  * when present; otherwise count is 0 or 1 from the level.
  */
+function parseTooltipCount(text) {
+  const clean = String(text || "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (/^no contributions/i.test(clean)) return 0;
+  const n = clean.match(/^([\d,]+)\s+contributions?/i);
+  return n ? Number(n[1].replace(/,/g, "")) : null;
+}
+
 function parseContributionsHtml(html) {
   const days = [];
   const seen = new Set();
-  const cellRe =
-    /data-date="(\d{4}-\d{2}-\d{2})"[^>]*data-level="(\d)"|data-level="(\d)"[^>]*data-date="(\d{4}-\d{2}-\d{2})"/g;
-  let m;
-  while ((m = cellRe.exec(html))) {
-    const date = m[1] || m[4];
-    const level = Number(m[2] || m[3] || 0);
-    if (!date || seen.has(date)) continue;
-    seen.add(date);
-    days.push({ date, level, count: level > 0 ? 1 : 0 });
+  const countsById = new Map();
+  const tipRe = /<tool-tip\b[^>]*\bfor="([^"]+)"[^>]*>([\s\S]*?)<\/tool-tip>/gi;
+  let tip;
+  while ((tip = tipRe.exec(html))) {
+    const count = parseTooltipCount(tip[2]);
+    if (count != null) countsById.set(tip[1], count);
   }
+
+  const cellRe = /<td\b([^>]*)>/gi;
+  let cell;
+  while ((cell = cellRe.exec(html))) {
+    const attrs = cell[1];
+    const dateMatch = attrs.match(/data-date="(\d{4}-\d{2}-\d{2})"/);
+    if (!dateMatch) continue;
+    const date = dateMatch[1];
+    if (seen.has(date)) continue;
+    seen.add(date);
+    const levelMatch = attrs.match(/data-level="(\d)"/);
+    const idMatch = attrs.match(/\bid="([^"]+)"/);
+    const level = levelMatch ? Number(levelMatch[1]) : 0;
+    const fromTip = idMatch ? countsById.get(idMatch[1]) : undefined;
+    const count = typeof fromTip === "number" ? fromTip : level > 0 ? 1 : 0;
+    days.push({ date, level, count });
+  }
+
   days.sort((a, b) => (a.date < b.date ? -1 : 1));
 
-  // Tooltip: "12 contributions on January 11th." bound to the following/previous cell is messy;
-  // match "N contribution(s) on Month DDth" is calendar-order-independent so we skip it.
-  // Heading is the reliable yearly total.
   const heading = html.match(
     /([\d,]+)\s+contributions?\s+in the last year/i
   );
@@ -148,5 +170,6 @@ module.exports = {
   addUtcDays,
   computeStreaks,
   parseContributionsHtml,
+  parseTooltipCount,
   calendarFromGraphQL,
 };

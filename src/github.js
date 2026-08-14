@@ -193,8 +193,10 @@ async function fetchCalendarGraphQL(username) {
 }
 
 async function fetchCalendarHTML(username) {
+  const { utcToday } = require("./streak");
+  const to = utcToday();
   const res = await fetch(
-    `https://github.com/users/${encodeURIComponent(username)}/contributions`,
+    `https://github.com/users/${encodeURIComponent(username)}/contributions?to=${to}`,
     {
       headers: {
         Accept: "text/html",
@@ -696,6 +698,8 @@ async function fetchUserStats(username) {
     followers: stats.followers,
   });
 
+  const { buildRecentActivity, buildInsights, buildBrief } = require("./insights");
+
   try {
     const calendar = await fetchContributionCalendar(login);
     stats.calendar = calendar.days;
@@ -708,10 +712,18 @@ async function fetchUserStats(username) {
     stats.streak = {
       total: 0,
       currentStreak: 0,
+      currentStart: null,
+      currentEnd: null,
       longestStreak: 0,
+      longestStart: null,
+      longestEnd: null,
     };
     stats.calendarError = err.message;
   }
+
+  stats.recent = buildRecentActivity(stats.calendar || []);
+  stats.insights = buildInsights(stats);
+  stats.brief = buildBrief(stats);
 
   cacheSet(`stats:${login.toLowerCase()}`, stats);
   return stats;

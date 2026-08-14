@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Commit Warrior — GitHub README Stats</title>
-  <meta name="description" content="Generate embeddable GitHub stats for your README — commits, PRs merged, issues closed, reviews, and more. Enter a username and copy the markdown." />
+  <title>Commit Warrior — GitHub stats for profiles and hiring</title>
+  <meta name="description" content="Live GitHub engineering stats for READMEs and hiring reviews: commits, merged PRs, closed issues, reviews, streaks, and what changed since yesterday." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,650&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/styles.css" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 </head>
@@ -20,20 +20,21 @@
       Commit Warrior
     </a>
     <nav class="topnav">
-      <a href="#generator">Generate</a>
-      <a href="#embed">Embed</a>
+      <a href="#lookup">Lookup</a>
+      <a href="#why">For hiring</a>
       <a href="https://github.com/developer-az/commit-warrior" target="_blank" rel="noopener">GitHub</a>
     </nav>
   </header>
 
   <main>
-    <section class="hero">
+    <section class="hero" id="lookup">
+      <p class="eyebrow">Public GitHub · live lookup</p>
       <p class="brand-hero">Commit Warrior</p>
-      <h1>Professional GitHub stats for your README</h1>
+      <h1>Engineering activity you can actually read</h1>
       <p class="lede">
-        Commits, merged PRs, closed issues, reviews, streaks — the engineering
-        footprint that belongs on a profile. Type a username, preview the cards,
-        paste one line of markdown.
+        Not a vanity counter. A concise brief of how someone ships: commits,
+        merged PRs, closed issues, reviews, and whether they were active
+        <em>yesterday and today</em>. Preview the cards, then paste them into a README.
       </p>
       <form class="hero-form" id="lookup-form" autocomplete="off">
         <label class="sr-only" for="username">GitHub username</label>
@@ -43,35 +44,86 @@
             id="username"
             name="username"
             type="text"
-            placeholder="your-github-username"
+            placeholder="github-username"
             spellcheck="false"
             maxlength="39"
             required
           />
         </div>
         <button type="submit" id="generate-btn">
-          <span>Show my stats</span>
+          <span>Review this profile</span>
         </button>
       </form>
-      <p class="hero-hint" id="status-line">Public profiles work instantly. No token needed on this page.</p>
+      <p class="hero-hint" id="status-line">Public profiles load instantly. No token on this page.</p>
+    </section>
+
+    <section class="why" id="why">
+      <div class="section-head">
+        <h2>What a hiring manager can take from this</h2>
+        <p>Numbers without context are noise. Each figure is paired with what it usually means on a team.</p>
+      </div>
+      <div class="why-grid">
+        <article>
+          <h3>Follow-through</h3>
+          <p>Merged PRs and closed issues show whether work lands, not only whether it was opened.</p>
+        </article>
+        <article>
+          <h3>Collaboration</h3>
+          <p>Reviews and repos contributed to are how you spot teammates, not just solo committers.</p>
+        </article>
+        <article>
+          <h3>Current status</h3>
+          <p>Today vs yesterday is a live check that the profile — and this service — is actually updating.</p>
+        </article>
+      </div>
     </section>
 
     <section class="generator" id="generator" hidden>
-      <div class="section-head">
-        <h2>Live preview</h2>
-        <p>Cards refresh from GitHub when someone views your README (cached ~30 min).</p>
+      <div class="live-bar" id="live-bar">
+        <span class="live-dot" aria-hidden="true"></span>
+        <span id="live-label">Live</span>
+        <span class="live-sep" aria-hidden="true">·</span>
+        <time id="served-at" datetime=""></time>
+        <span class="status-chip" id="status-chip">Status</span>
       </div>
 
       <div class="profile-strip" id="profile-strip">
-        <img id="avatar" alt="" width="48" height="48" />
+        <img id="avatar" alt="" width="56" height="56" />
         <div>
           <p class="profile-name" id="profile-name"></p>
           <a class="profile-link" id="profile-link" target="_blank" rel="noopener"></a>
         </div>
-        <div class="rank-pill" id="rank-pill"></div>
+        <div class="rank-block">
+          <span class="rank-pill" id="rank-pill">Grade —</span>
+          <span class="rank-note" id="rank-note"></span>
+        </div>
       </div>
 
-      <div class="metrics" id="metrics" aria-live="polite"></div>
+      <p class="brief" id="brief"></p>
+
+      <div class="section-head tight">
+        <h2>Since yesterday</h2>
+        <p id="recent-detail">Public contribution days from GitHub’s calendar.</p>
+      </div>
+
+      <div class="delta-board" id="delta-board" aria-live="polite"></div>
+      <div class="spark-wrap">
+        <p class="spark-label">Last 14 contribution days</p>
+        <div id="sparkline"></div>
+      </div>
+
+      <div class="insights" id="insights"></div>
+
+      <div class="section-head tight">
+        <h2>Career totals</h2>
+        <p>All-time public GitHub activity, with a one-line reading for each metric.</p>
+      </div>
+      <div class="metrics" id="metrics"></div>
+
+      <div class="section-head tight">
+        <h2>README cards</h2>
+        <p>Same SVGs GitHub will fetch when someone opens the profile README.</p>
+      </div>
 
       <div class="card-stage">
         <figure class="card-frame">
@@ -94,10 +146,11 @@
 
       <div class="controls">
         <label>
-          Theme
+          Card theme
           <select id="theme">
-            <option value="default">Default</option>
-            <option value="dark">Dark</option>
+            <option value="professional" selected>Professional</option>
+            <option value="default">GitHub green</option>
+            <option value="dark">Dark blue</option>
             <option value="light">Light</option>
             <option value="tokyonight">Tokyo Night</option>
             <option value="radical">Radical</option>
@@ -121,45 +174,24 @@
 
     <section class="embed" id="embed" hidden>
       <div class="section-head">
-        <h2>README markdown</h2>
-        <p>Drop this into your profile README (<code>username/username</code> repo).</p>
+        <h2>Drop this into a README</h2>
+        <p>Profile README repo is <code>username/username</code>. GitHub loads these URLs as images.</p>
       </div>
       <div class="code-block">
         <pre><code id="markdown-output"></code></pre>
         <button type="button" class="copy-btn" id="copy-btn">Copy</button>
       </div>
       <div class="urls">
-        <p><span>Stats URL</span> <code id="stats-url"></code></p>
-        <p><span>Languages URL</span> <code id="langs-url"></code></p>
-        <p><span>Streak URL</span> <code id="streak-url"></code></p>
-        <p><span>Graph URL</span> <code id="graph-url"></code></p>
+        <p><span>Stats</span> <code id="stats-url"></code></p>
+        <p><span>Languages</span> <code id="langs-url"></code></p>
+        <p><span>Streak</span> <code id="streak-url"></code></p>
+        <p><span>Graph</span> <code id="graph-url"></code></p>
       </div>
-    </section>
-
-    <section class="how">
-      <div class="section-head">
-        <h2>How it works</h2>
-        <p>Same pattern as the popular README stat trackers — a dynamic SVG endpoint.</p>
-      </div>
-      <ol class="steps">
-        <li>
-          <strong>You enter a username</strong>
-          <span>We query GitHub for commits, PRs, merged work, issues, reviews, streaks, and languages.</span>
-        </li>
-        <li>
-          <strong>SVG cards are rendered on demand</strong>
-          <span>GitHub’s README renderer loads the image URL; our API returns a fresh SVG.</span>
-        </li>
-        <li>
-          <strong>One markdown line embeds it forever</strong>
-          <span>Change themes or options with query params — no rebuild, no commit of binaries.</span>
-        </li>
-      </ol>
     </section>
   </main>
 
   <footer class="footer">
-    <p>Commit Warrior · open source on <a href="https://github.com/developer-az/commit-warrior" target="_blank" rel="noopener">GitHub</a></p>
+    <p>Commit Warrior is a professional GitHub stats service · <a href="https://github.com/developer-az/commit-warrior" target="_blank" rel="noopener">Source</a></p>
   </footer>
 
   <script src="/app.js"></script>

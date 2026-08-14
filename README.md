@@ -15,7 +15,7 @@ npm start
 # → http://localhost:3000
 ```
 
-Optional: open with a preset user — `http://localhost:3000?username=octocat`
+The website shows **today vs yesterday** (and the last 14 days) so you can see current status and that the lookup is live. Career totals stay all-time.
 
 ### 2. README embeds (preview / markdown image)
 
@@ -62,7 +62,7 @@ Replace `YOUR_HOST` with your deployment URL (or `http://localhost:3000` while t
 **Stats** (`/api/stats`)
 
 - `username` (required)
-- `theme` — `default` · `dark` · `light` · `tokyonight` · `radical` · `transparent`
+- `theme` — `professional` · `default` · `dark` · `light` · `tokyonight` · `radical` · `transparent`
 - `show_icons` — `true` / `false`
 - `hide_rank` — `true` / `false`
 - `hide_border` — `true` / `false`

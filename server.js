@@ -150,8 +150,13 @@ app.get("/api/json", async (req, res) => {
   }
   try {
     const stats = await fetchUserStats(username);
-    res.set("Cache-Control", "public, max-age=600");
-    res.json(stats);
+    const { calendar, ...rest } = stats;
+    res.set("Cache-Control", "public, max-age=120");
+    res.json({
+      ...rest,
+      servedAt: new Date().toISOString(),
+      hasCalendar: Array.isArray(calendar) && calendar.length > 0,
+    });
   } catch (err) {
     res.status(err.status || 500).json({
       error: err.message || "Failed to load stats",
@@ -165,6 +170,7 @@ app.get("/api/health", (_req, res) => {
     tokenConfigured: Boolean(process.env.GITHUB_TOKEN || process.env.GH_TOKEN),
     tokenActive: isTokenActive(),
     version: require("./package.json").version,
+    serverTime: new Date().toISOString(),
   });
 });
 

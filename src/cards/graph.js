@@ -18,7 +18,7 @@ const LEVEL_COLORS = {
   light: ["#ebedf0", "#9be9a8", "#40c463", "#30a14e", "#216e39"],
   tokyonight: ["#1a1b27", "#283655", "#3d59a1", "#7aa2f7", "#bb9af7"],
   radical: ["#141321", "#4a1942", "#9b1d6a", "#fe428e", "#f8d847"],
-  transparent: ["#ffffff18", "#0e4429", "#006d32", "#26a641", "#39d353"],
+  professional: ["#1e2633", "#3d4a3a", "#6b8f71", "#c4a574", "#e8d5a3"],
 };
 
 function weekday(iso) {
@@ -39,6 +39,16 @@ function renderGraphCard(stats, options = {}) {
   );
   const name = escapeXml(stats.name || stats.login || "GitHub");
   const total = stats.yearContributions ?? 0;
+
+  if (!days.length) {
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="495" height="140" viewBox="0 0 495 140" role="img">
+  <title>${name}'s Contribution Graph</title>
+  <rect x="0.5" y="0.5" width="494" height="139" rx="8" fill="${theme.bg}" stroke="${hideBorder ? "none" : theme.border}"/>
+  <text x="24" y="40" fill="${theme.title}" font-family="Segoe UI, Ubuntu, sans-serif" font-size="16" font-weight="600">${name}'s Contributions</text>
+  <text x="24" y="78" fill="${theme.muted}" font-family="Segoe UI, Ubuntu, sans-serif" font-size="13">Contribution calendar is unavailable for this profile right now.</text>
+</svg>`;
+  }
 
   const cell = 11;
   const gap = 3;
