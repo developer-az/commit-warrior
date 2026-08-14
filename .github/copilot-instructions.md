@@ -30,6 +30,10 @@ Commit Warrior is a **Node/Express web app** that generates GitHub README stats.
 - `src/rank.js` — S–C rank from weighted percentiles
 - `src/cards/stats.js` — Stats SVG renderer
 - `src/cards/languages.js` — Top-languages SVG renderer
+- `src/cards/streak.js` — Streak SVG renderer
+- `src/cards/graph.js` — Contribution heatmap SVG renderer
+- `src/streak.js` — Calendar parse + streak math
+- `src/insights.js` — Today vs yesterday plus compact highlights
 - `public/` — Website (username form, live preview, markdown copy)
 - `test/` — Unit tests
 
@@ -41,6 +45,8 @@ Commit Warrior is a **Node/Express web app** that generates GitHub README stats.
 ```
 GET /api/stats?username=USER&theme=default&show_icons=true
 GET /api/top-langs?username=USER&layout=compact&theme=default
+GET /api/streak?username=USER&theme=default
+GET /api/graph?username=USER&theme=default
 GET /api/json?username=USER
 ```
 
@@ -55,6 +61,7 @@ SVG responses use `Content-Type: image/svg+xml` and `Cache-Control: public, max-
 5. With `GITHUB_TOKEN`, confirm `source: "graphql"` in `/api/json` and non-zero commit totals for active users
 
 ## Design notes for the website
-- Brand-first hero (“Commit Warrior”), Syne + IBM Plex Mono, verdant accent on deep green-black — not purple/cream/newspaper defaults
-- First viewport: brand, one headline, one lede, username CTA — no stat dumps in the hero
-- Cards appear only after lookup (preview of README embeds)
+- Brand-first hero (“Commit Warrior”), Fraunces + IBM Plex Sans, brass on navy
+- First viewport: brand, one line of purpose, username field
+- After lookup: today vs yesterday, a few highlights, totals, README cards
+- Short labels only. No essays under metrics.

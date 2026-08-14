@@ -29,6 +29,21 @@ function renderLanguagesCard(stats, options = {}) {
   const title = `Most Used Languages`;
   const width = 300;
 
+  if (!langs.length) {
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="120" viewBox="0 0 ${width} 120" role="img">
+  <title>${title}</title>
+  <style>
+    .title { font: 600 16px 'Segoe UI', Ubuntu, Sans-Serif; }
+    .msg { font: 400 13px 'Segoe UI', Ubuntu, Sans-Serif; }
+  </style>
+  <rect x="0.5" y="0.5" width="${width - 1}" height="119" rx="8"
+    fill="${theme.bg}" stroke="${hideBorder ? "none" : theme.border}"/>
+  <text x="25" y="32" class="title" fill="${theme.title}">${title}</text>
+  <text x="25" y="70" class="msg" fill="${theme.muted}">No public language data for this profile.</text>
+</svg>`;
+  }
+
   if (layout === "compact") {
     const height = 90 + Math.ceil(langs.length / 2) * 22;
     let progress = "";

@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Commit Warrior — GitHub README Stats</title>
-  <meta name="description" content="Generate embeddable GitHub stats for your README — commits, PRs merged, issues closed, reviews, and more. Enter a username and copy the markdown." />
+  <title>Commit Warrior</title>
+  <meta name="description" content="Look up a GitHub username. See today vs yesterday, career stats, and README cards." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560;9..144,650&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/styles.css" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 </head>
 <body>
   <div class="atmosphere" aria-hidden="true"></div>
@@ -19,21 +20,15 @@
       Commit Warrior
     </a>
     <nav class="topnav">
-      <a href="#generator">Generate</a>
-      <a href="#embed">Embed</a>
       <a href="https://github.com/developer-az/commit-warrior" target="_blank" rel="noopener">GitHub</a>
     </nav>
   </header>
 
   <main>
-    <section class="hero">
+    <section class="hero" id="lookup">
       <p class="brand-hero">Commit Warrior</p>
-      <h1>Professional GitHub stats for your README</h1>
-      <p class="lede">
-        Commits, merged PRs, closed issues, reviews, stars — the engineering
-        footprint that belongs on a profile. Type a username, preview the cards,
-        paste one line of markdown.
-      </p>
+      <h1>GitHub stats for your README</h1>
+      <p class="lede">Enter a username. Check today against yesterday, then copy the cards.</p>
       <form class="hero-form" id="lookup-form" autocomplete="off">
         <label class="sr-only" for="username">GitHub username</label>
         <div class="input-shell">
@@ -42,113 +37,110 @@
             id="username"
             name="username"
             type="text"
-            placeholder="your-github-username"
+            placeholder="username"
             spellcheck="false"
             maxlength="39"
             required
           />
         </div>
         <button type="submit" id="generate-btn">
-          <span>Show my stats</span>
+          <span>Look up</span>
         </button>
       </form>
-      <p class="hero-hint" id="status-line">Public profiles work instantly. No token needed on this page.</p>
+      <p class="hero-hint" id="status-line">Public profiles only.</p>
     </section>
 
-    <section class="generator" id="generator" hidden>
-      <div class="section-head">
-        <h2>Live preview</h2>
-        <p>Cards refresh from GitHub when someone views your README (cached ~30 min).</p>
-      </div>
-
-      <div class="profile-strip" id="profile-strip">
+    <section class="report" id="generator" hidden>
+      <div class="profile-strip">
         <img id="avatar" alt="" width="48" height="48" />
         <div>
           <p class="profile-name" id="profile-name"></p>
           <a class="profile-link" id="profile-link" target="_blank" rel="noopener"></a>
         </div>
-        <div class="rank-pill" id="rank-pill"></div>
+        <div class="meta-right">
+          <span class="rank-pill" id="rank-pill"></span>
+          <span class="live-line">
+            <span class="live-dot" aria-hidden="true"></span>
+            <span id="live-label">Live</span>
+            <time id="served-at" datetime=""></time>
+          </span>
+        </div>
       </div>
 
-      <div class="metrics" id="metrics" aria-live="polite"></div>
-
-      <div class="card-stage">
-        <figure class="card-frame">
-          <figcaption>Stats card</figcaption>
-          <img id="stats-card" alt="GitHub stats card preview" />
-        </figure>
-        <figure class="card-frame">
-          <figcaption>Top languages</figcaption>
-          <img id="langs-card" alt="Top languages card preview" />
-        </figure>
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Today</h2>
+          <span class="status-chip" id="status-chip"></span>
+        </div>
+        <div class="delta-board" id="delta-board" aria-live="polite"></div>
+        <div id="sparkline" class="sparkline-host"></div>
       </div>
 
-      <div class="controls">
-        <label>
-          Theme
-          <select id="theme">
-            <option value="default">Default</option>
-            <option value="dark">Dark</option>
-            <option value="light">Light</option>
-            <option value="tokyonight">Tokyo Night</option>
-            <option value="radical">Radical</option>
-            <option value="transparent">Transparent</option>
-          </select>
-        </label>
-        <label class="check">
-          <input type="checkbox" id="show-icons" checked />
-          Icons
-        </label>
-        <label class="check">
-          <input type="checkbox" id="hide-rank" />
-          Hide rank
-        </label>
-        <label class="check">
-          <input type="checkbox" id="compact-langs" checked />
-          Compact languages
-        </label>
+      <div class="highlights" id="highlights"></div>
+      <div class="metrics" id="metrics"></div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2>README cards</h2>
+          <div class="controls">
+            <label>
+              Theme
+              <select id="theme">
+                <option value="professional" selected>Professional</option>
+                <option value="default">GitHub</option>
+                <option value="dark">Dark</option>
+                <option value="light">Light</option>
+                <option value="tokyonight">Tokyo Night</option>
+                <option value="radical">Radical</option>
+                <option value="transparent">Transparent</option>
+              </select>
+            </label>
+            <label class="check">
+              <input type="checkbox" id="show-icons" checked />
+              Icons
+            </label>
+            <label class="check">
+              <input type="checkbox" id="hide-rank" />
+              Hide rank
+            </label>
+            <label class="check">
+              <input type="checkbox" id="compact-langs" checked />
+              Compact
+            </label>
+          </div>
+        </div>
+        <div class="card-stage">
+          <figure class="card-frame">
+            <figcaption>Stats</figcaption>
+            <img id="stats-card" alt="Stats card" />
+          </figure>
+          <figure class="card-frame">
+            <figcaption>Languages</figcaption>
+            <img id="langs-card" alt="Languages card" />
+          </figure>
+          <figure class="card-frame">
+            <figcaption>Streak</figcaption>
+            <img id="streak-card" alt="Streak card" />
+          </figure>
+          <figure class="card-frame span-full">
+            <figcaption>Graph</figcaption>
+            <img id="graph-card" alt="Contribution graph" />
+          </figure>
+        </div>
       </div>
     </section>
 
     <section class="embed" id="embed" hidden>
-      <div class="section-head">
-        <h2>README markdown</h2>
-        <p>Drop this into your profile README (<code>username/username</code> repo).</p>
-      </div>
-      <div class="code-block">
-        <pre><code id="markdown-output"></code></pre>
+      <div class="panel-head">
+        <h2>Markdown</h2>
         <button type="button" class="copy-btn" id="copy-btn">Copy</button>
       </div>
-      <div class="urls">
-        <p><span>Stats URL</span> <code id="stats-url"></code></p>
-        <p><span>Languages URL</span> <code id="langs-url"></code></p>
-      </div>
-    </section>
-
-    <section class="how">
-      <div class="section-head">
-        <h2>How it works</h2>
-        <p>Same pattern as the popular README stat trackers — a dynamic SVG endpoint.</p>
-      </div>
-      <ol class="steps">
-        <li>
-          <strong>You enter a username</strong>
-          <span>We query GitHub for commits, PRs, merged work, issues, reviews, stars, and languages.</span>
-        </li>
-        <li>
-          <strong>SVG cards are rendered on demand</strong>
-          <span>GitHub’s README renderer loads the image URL; our API returns a fresh SVG.</span>
-        </li>
-        <li>
-          <strong>One markdown line embeds it forever</strong>
-          <span>Change themes or options with query params — no rebuild, no commit of binaries.</span>
-        </li>
-      </ol>
+      <pre class="code-block"><code id="markdown-output"></code></pre>
     </section>
   </main>
 
   <footer class="footer">
-    <p>Commit Warrior · open source on <a href="https://github.com/developer-az/commit-warrior" target="_blank" rel="noopener">GitHub</a></p>
+    <p><a href="https://github.com/developer-az/commit-warrior" target="_blank" rel="noopener">Source</a></p>
   </footer>
 
   <script src="/app.js"></script>

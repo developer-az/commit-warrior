@@ -35,6 +35,8 @@ try {
 const { fetchUserStats, getToken, isTokenActive } = require("./src/github");
 const { renderStatsCard } = require("./src/cards/stats");
 const { renderLanguagesCard } = require("./src/cards/languages");
+const { renderStreakCard } = require("./src/cards/streak");
+const { renderGraphCard } = require("./src/cards/graph");
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -98,11 +100,47 @@ async function handleLanguages(req, res) {
   }
 }
 
+async function handleStreak(req, res) {
+  const username = req.query.username;
+  if (!username) {
+    svgHeaders(res, 60);
+    return res.status(400).send(errorSvg("Missing ?username= parameter"));
+  }
+  try {
+    const stats = await fetchUserStats(username);
+    svgHeaders(res);
+    res.send(renderStreakCard(stats, req.query));
+  } catch (err) {
+    const status = err.status || 500;
+    svgHeaders(res, 60);
+    res.status(status).send(errorSvg(err.message || "Failed to load streak", status));
+  }
+}
+
+async function handleGraph(req, res) {
+  const username = req.query.username;
+  if (!username) {
+    svgHeaders(res, 60);
+    return res.status(400).send(errorSvg("Missing ?username= parameter"));
+  }
+  try {
+    const stats = await fetchUserStats(username);
+    svgHeaders(res);
+    res.send(renderGraphCard(stats, req.query));
+  } catch (err) {
+    const status = err.status || 500;
+    svgHeaders(res, 60);
+    res.status(status).send(errorSvg(err.message || "Failed to load graph", status));
+  }
+}
+
 // README embed endpoints (github-readme-stats compatible paths)
 app.get("/api", handleStats);
 app.get("/api/stats", handleStats);
 app.get("/api/top-langs", handleLanguages);
 app.get("/api/top-langs/", handleLanguages);
+app.get("/api/streak", handleStreak);
+app.get("/api/graph", handleGraph);
 
 // JSON for the interactive website
 app.get("/api/json", async (req, res) => {
@@ -112,8 +150,13 @@ app.get("/api/json", async (req, res) => {
   }
   try {
     const stats = await fetchUserStats(username);
-    res.set("Cache-Control", "public, max-age=600");
-    res.json(stats);
+    const { calendar, ...rest } = stats;
+    res.set("Cache-Control", "public, max-age=120");
+    res.json({
+      ...rest,
+      servedAt: new Date().toISOString(),
+      hasCalendar: Array.isArray(calendar) && calendar.length > 0,
+    });
   } catch (err) {
     res.status(err.status || 500).json({
       error: err.message || "Failed to load stats",
@@ -127,6 +170,7 @@ app.get("/api/health", (_req, res) => {
     tokenConfigured: Boolean(process.env.GITHUB_TOKEN || process.env.GH_TOKEN),
     tokenActive: isTokenActive(),
     version: require("./package.json").version,
+    serverTime: new Date().toISOString(),
   });
 });
 

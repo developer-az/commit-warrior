@@ -48,6 +48,15 @@ const THEMES = {
     ring: "#238636",
     muted: "#8b949e",
   },
+  professional: {
+    title: "#d4b483",
+    text: "#f3efe6",
+    icon: "#c4a574",
+    bg: "#161c25",
+    border: "#2c3544",
+    ring: "#d4b483",
+    muted: "#9aa3b2",
+  },
   light: {
     title: "#0969da",
     text: "#1f2328",
@@ -134,9 +143,15 @@ function renderStatsCard(stats, options = {}) {
     "reviews",
     "contribs",
   ]);
-  const visible = options.show
-    ? rows
-    : rows.filter((r) => defaultKeys.has(r.key));
+  const extra = new Set(
+    String(options.show || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
+  );
+  const visible = rows.filter(
+    (r) => defaultKeys.has(r.key) || extra.has(r.key)
+  );
 
   const lineHeight = 25;
   const paddingTop = 50;
