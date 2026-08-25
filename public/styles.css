@@ -476,14 +476,48 @@ button {
 .funnel-track {
   height: 0.55rem;
   background: rgba(244, 240, 232, 0.06);
-  border-radius: 999px;
+  border-radius: 3px;
   overflow: hidden;
+}
+
+.viz-panel {
+  animation: rise-in 0.55s ease-out both;
+}
+
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .funnel-track span {
   display: block;
   height: 100%;
   border-radius: inherit;
+  transform-origin: left center;
+  animation: bar-grow 0.7s ease-out both;
+}
+
+@keyframes bar-grow {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+.donut circle[stroke-dasharray] {
+  animation: donut-draw 0.9s ease-out both;
+}
+
+@keyframes donut-draw {
+  from { stroke-opacity: 0; }
+  to { stroke-opacity: 1; }
+}
+
+.chart rect {
+  animation: bar-fade 0.55s ease-out both;
+}
+
+@keyframes bar-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .funnel-rate {
@@ -507,7 +541,7 @@ button {
 .milestone-chip {
   padding: 0.3rem 0.65rem;
   border: 1px solid rgba(212, 180, 131, 0.35);
-  border-radius: 999px;
+  border-radius: 6px;
   color: var(--accent);
   font-size: 0.75rem;
   font-weight: 600;
