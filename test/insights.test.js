@@ -1,7 +1,13 @@
 const { describe, it } = require("node:test");
 const assert = require("node:assert/strict");
 const { parseContributionsHtml, parseTooltipCount } = require("../src/streak");
-const { buildRecentActivity, buildHighlights } = require("../src/insights");
+const {
+  buildRecentActivity,
+  buildHighlights,
+  buildVisualizations,
+  buildFunnel,
+  buildMilestones,
+} = require("../src/insights");
 
 describe("parseTooltipCount", () => {
   it("reads exact and zero contribution tooltips", () => {
@@ -82,5 +88,60 @@ describe("buildHighlights", () => {
       streak: { currentStreak: 0 },
     });
     assert.equal(items.length, 0);
+  });
+});
+
+describe("buildVisualizations", () => {
+  it("aggregates weekday, weekly, monthly, and activity series", () => {
+    const days = [];
+    for (let i = 0; i < 60; i += 1) {
+      const d = new Date(Date.UTC(2026, 6, 16));
+      d.setUTCDate(d.getUTCDate() + i);
+      const iso = d.toISOString().slice(0, 10);
+      days.push({ date: iso, count: i % 5 === 0 ? 4 : 1, level: 1 });
+    }
+    const viz = buildVisualizations(days, new Date("2026-08-14T12:00:00Z"));
+    assert.equal(viz.weekdays.length, 7);
+    assert.equal(viz.weeks.length, 12);
+    assert.equal(viz.months.length, 6);
+    assert.ok(viz.activity.length > 40);
+    assert.ok(viz.consistency.activeDays > 0);
+    assert.ok(viz.consistency.busiestWeekday);
+  });
+});
+
+describe("buildFunnel", () => {
+  it("computes PR merge rate", () => {
+    const funnel = buildFunnel({
+      totalPRs: 10,
+      mergedPRs: 7,
+      closedPRs: 2,
+      totalIssues: 5,
+      closedIssues: 4,
+    });
+    assert.equal(funnel.prs.mergeRate, 70);
+    assert.equal(funnel.issues.closeRate, 80);
+    assert.equal(funnel.prs.open, 1);
+  });
+});
+
+describe("buildMilestones", () => {
+  it("unlocks thresholds that are met", () => {
+    const items = buildMilestones({
+      totalCommits: 1200,
+      totalPRs: 60,
+      mergedPRs: 30,
+      totalReviews: 0,
+      totalStars: 10,
+      contributedTo: 12,
+      topLanguages: [{ name: "Go" }, { name: "TS" }, { name: "Rust" }],
+      streak: { longestStreak: 14 },
+    });
+    const labels = items.map((i) => i.label);
+    assert.ok(labels.includes("1K Commits"));
+    assert.ok(labels.includes("50 PRs"));
+    assert.ok(labels.includes("7-Day Streak"));
+    assert.ok(labels.includes("Polyglot"));
+    assert.ok(!labels.includes("50 Stars"));
   });
 });

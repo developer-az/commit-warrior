@@ -1,6 +1,6 @@
 # Commit Warrior
 
-Dynamically generated **GitHub README stats** — commits, pull requests, merged PRs, closed issues, code reviews, streaks, contribution graphs, stars, and top languages. Use it as a website or embed SVG cards in any profile README.
+Dynamically generated **GitHub README stats** — commits, pull requests, merged PRs, closed issues, code reviews, streaks, contribution graphs, activity charts, milestones, stars, and top languages. Use it as a website or embed SVG cards in any profile README.
 
 ## Two ways to use it
 
@@ -15,7 +15,7 @@ npm start
 # → http://localhost:3000
 ```
 
-The website shows today vs yesterday so you can tell the lookup is live. Career totals are all-time.
+The website shows today vs yesterday, language / weekday / PR / weekly charts, and copy-ready README markdown. Career totals are all-time.
 
 ### 2. README embeds (preview / markdown image)
 
@@ -25,7 +25,9 @@ Same idea as [github-readme-stats](https://github.com/anuraghazra/github-readme-
 [![GitHub stats](https://YOUR_HOST/api/stats?username=YOUR_USERNAME&show_icons=true)](https://github.com/YOUR_USERNAME)
 ![Top Languages](https://YOUR_HOST/api/top-langs?username=YOUR_USERNAME&layout=compact)
 ![GitHub Streak](https://YOUR_HOST/api/streak?username=YOUR_USERNAME)
+![Milestones](https://YOUR_HOST/api/milestones?username=YOUR_USERNAME)
 ![Contribution Graph](https://YOUR_HOST/api/graph?username=YOUR_USERNAME)
+![Activity Graph](https://YOUR_HOST/api/activity?username=YOUR_USERNAME)
 ```
 
 Replace `YOUR_HOST` with your deployment URL (or `http://localhost:3000` while testing).
@@ -45,6 +47,8 @@ Replace `YOUR_HOST` with your deployment URL (or `http://localhost:3000` while t
 | Rank | Weighted score (S → C) from the metrics above |
 | Current / longest streak | Consecutive contribution days (commits, PRs, issues — GitHub’s calendar) |
 | Contribution graph | Last-year heatmap, same shape as the profile calendar |
+| Activity graph | Weekly contribution trend (smooth area chart) for the last year |
+| Milestones | Threshold badges (commits, PRs, streaks, polyglot, …) |
 
 ## API
 
@@ -54,7 +58,9 @@ Replace `YOUR_HOST` with your deployment URL (or `http://localhost:3000` while t
 | `GET /api/top-langs?username=` | Top languages SVG card |
 | `GET /api/streak?username=` | Total / current / longest streak SVG |
 | `GET /api/graph?username=` | Contribution heatmap SVG |
-| `GET /api/json?username=` | JSON used by the website |
+| `GET /api/activity?username=` | Weekly activity trend SVG |
+| `GET /api/milestones?username=` | Milestone badge strip SVG |
+| `GET /api/json?username=` | JSON used by the website (includes viz aggregates) |
 | `GET /api/health` | Health + whether a token is configured |
 
 ### Query options
@@ -76,7 +82,7 @@ Replace `YOUR_HOST` with your deployment URL (or `http://localhost:3000` while t
 - `langs_count` — number of languages (default 6)
 - `hide_border` — `true` / `false`
 
-**Streak / graph** (`/api/streak`, `/api/graph`)
+**Streak / graph / activity / milestones** (`/api/streak`, `/api/graph`, `/api/activity`, `/api/milestones`)
 
 - `username` (required)
 - `theme` — same themes

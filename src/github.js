@@ -698,7 +698,13 @@ async function fetchUserStats(username) {
     followers: stats.followers,
   });
 
-  const { buildRecentActivity, buildHighlights } = require("./insights");
+  const {
+    buildRecentActivity,
+    buildVisualizations,
+    buildFunnel,
+    buildHighlights,
+    buildMilestones,
+  } = require("./insights");
 
   try {
     const calendar = await fetchContributionCalendar(login);
@@ -722,6 +728,9 @@ async function fetchUserStats(username) {
   }
 
   stats.recent = buildRecentActivity(stats.calendar || []);
+  stats.viz = buildVisualizations(stats.calendar || []);
+  stats.funnel = buildFunnel(stats);
+  stats.milestones = buildMilestones(stats);
   stats.highlights = buildHighlights(stats);
 
   cacheSet(`stats:${login.toLowerCase()}`, stats);

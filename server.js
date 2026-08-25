@@ -37,6 +37,8 @@ const { renderStatsCard } = require("./src/cards/stats");
 const { renderLanguagesCard } = require("./src/cards/languages");
 const { renderStreakCard } = require("./src/cards/streak");
 const { renderGraphCard } = require("./src/cards/graph");
+const { renderActivityCard } = require("./src/cards/activity");
+const { renderMilestonesCard } = require("./src/cards/milestones");
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -134,6 +136,42 @@ async function handleGraph(req, res) {
   }
 }
 
+async function handleActivity(req, res) {
+  const username = req.query.username;
+  if (!username) {
+    svgHeaders(res, 60);
+    return res.status(400).send(errorSvg("Missing ?username= parameter"));
+  }
+  try {
+    const stats = await fetchUserStats(username);
+    svgHeaders(res);
+    res.send(renderActivityCard(stats, req.query));
+  } catch (err) {
+    const status = err.status || 500;
+    svgHeaders(res, 60);
+    res.status(status).send(errorSvg(err.message || "Failed to load activity", status));
+  }
+}
+
+async function handleMilestones(req, res) {
+  const username = req.query.username;
+  if (!username) {
+    svgHeaders(res, 60);
+    return res.status(400).send(errorSvg("Missing ?username= parameter"));
+  }
+  try {
+    const stats = await fetchUserStats(username);
+    svgHeaders(res);
+    res.send(renderMilestonesCard(stats, req.query));
+  } catch (err) {
+    const status = err.status || 500;
+    svgHeaders(res, 60);
+    res.status(status).send(
+      errorSvg(err.message || "Failed to load milestones", status)
+    );
+  }
+}
+
 // README embed endpoints (github-readme-stats compatible paths)
 app.get("/api", handleStats);
 app.get("/api/stats", handleStats);
@@ -141,6 +179,8 @@ app.get("/api/top-langs", handleLanguages);
 app.get("/api/top-langs/", handleLanguages);
 app.get("/api/streak", handleStreak);
 app.get("/api/graph", handleGraph);
+app.get("/api/activity", handleActivity);
+app.get("/api/milestones", handleMilestones);
 
 // JSON for the interactive website
 app.get("/api/json", async (req, res) => {

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Commit Warrior</title>
-  <meta name="description" content="Look up a GitHub username. See today vs yesterday, career stats, and README cards." />
+  <meta name="description" content="Look up a GitHub username. See live activity charts, career stats, and copy README cards." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560;9..144,650&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -28,7 +28,7 @@
     <section class="hero" id="lookup">
       <p class="brand-hero">Commit Warrior</p>
       <h1>GitHub stats for your README</h1>
-      <p class="lede">Enter a username. Check today against yesterday, then copy the cards.</p>
+      <p class="lede">Enter a username. See today vs yesterday, charts that summarize the year, then copy the cards.</p>
       <form class="hero-form" id="lookup-form" autocomplete="off">
         <label class="sr-only" for="username">GitHub username</label>
         <div class="input-shell">
@@ -77,6 +77,37 @@
       </div>
 
       <div class="highlights" id="highlights"></div>
+
+      <div class="panel viz-panel">
+        <div class="panel-head">
+          <h2>Year at a glance</h2>
+          <span class="panel-note" id="consistency-note"></span>
+        </div>
+        <div class="viz-grid">
+          <figure class="viz-block">
+            <figcaption>Languages</figcaption>
+            <div id="lang-donut" class="viz-host"></div>
+          </figure>
+          <figure class="viz-block">
+            <figcaption>Weekday rhythm</figcaption>
+            <div id="weekday-chart" class="viz-host"></div>
+          </figure>
+          <figure class="viz-block">
+            <figcaption>PR funnel</figcaption>
+            <div id="funnel-chart" class="viz-host"></div>
+          </figure>
+          <figure class="viz-block span-wide">
+            <figcaption>Last 12 weeks</figcaption>
+            <div id="weekly-chart" class="viz-host"></div>
+          </figure>
+          <figure class="viz-block span-wide">
+            <figcaption>Monthly trend</figcaption>
+            <div id="monthly-chart" class="viz-host"></div>
+          </figure>
+        </div>
+        <div class="milestones" id="milestones"></div>
+      </div>
+
       <div class="metrics" id="metrics"></div>
 
       <div class="panel">
@@ -109,22 +140,38 @@
             </label>
           </div>
         </div>
+        <div class="card-picks" id="card-picks">
+          <label class="check"><input type="checkbox" data-card="stats" checked /> Stats</label>
+          <label class="check"><input type="checkbox" data-card="langs" checked /> Languages</label>
+          <label class="check"><input type="checkbox" data-card="streak" checked /> Streak</label>
+          <label class="check"><input type="checkbox" data-card="graph" checked /> Graph</label>
+          <label class="check"><input type="checkbox" data-card="activity" checked /> Activity</label>
+          <label class="check"><input type="checkbox" data-card="milestones" checked /> Milestones</label>
+        </div>
         <div class="card-stage">
-          <figure class="card-frame">
+          <figure class="card-frame" data-preview="stats">
             <figcaption>Stats</figcaption>
             <img id="stats-card" alt="Stats card" />
           </figure>
-          <figure class="card-frame">
+          <figure class="card-frame" data-preview="langs">
             <figcaption>Languages</figcaption>
             <img id="langs-card" alt="Languages card" />
           </figure>
-          <figure class="card-frame">
+          <figure class="card-frame" data-preview="streak">
             <figcaption>Streak</figcaption>
             <img id="streak-card" alt="Streak card" />
           </figure>
-          <figure class="card-frame span-full">
+          <figure class="card-frame" data-preview="milestones">
+            <figcaption>Milestones</figcaption>
+            <img id="milestones-card" alt="Milestones card" />
+          </figure>
+          <figure class="card-frame span-full" data-preview="graph">
             <figcaption>Graph</figcaption>
             <img id="graph-card" alt="Contribution graph" />
+          </figure>
+          <figure class="card-frame span-full" data-preview="activity">
+            <figcaption>Activity</figcaption>
+            <img id="activity-card" alt="Activity graph" />
           </figure>
         </div>
       </div>
