@@ -702,7 +702,7 @@ async function fetchUserStats(username) {
     buildRecentActivity,
     buildVisualizations,
     buildFunnel,
-    buildHighlights,
+    buildSignals,
     buildMilestones,
   } = require("./insights");
 
@@ -730,8 +730,12 @@ async function fetchUserStats(username) {
   stats.recent = buildRecentActivity(stats.calendar || []);
   stats.viz = buildVisualizations(stats.calendar || []);
   stats.funnel = buildFunnel(stats);
+  stats.signals = buildSignals({ ...stats, viz: stats.viz, funnel: stats.funnel });
   stats.milestones = buildMilestones(stats);
-  stats.highlights = buildHighlights(stats);
+  stats.highlights = stats.signals.pillars.map((p) => ({
+    label: p.title,
+    value: p.metric,
+  }));
 
   cacheSet(`stats:${login.toLowerCase()}`, stats);
   return stats;

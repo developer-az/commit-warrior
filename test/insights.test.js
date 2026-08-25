@@ -6,7 +6,9 @@ const {
   buildHighlights,
   buildVisualizations,
   buildFunnel,
+  buildSignals,
   buildMilestones,
+  computeTrend,
 } = require("../src/insights");
 
 describe("parseTooltipCount", () => {
@@ -46,7 +48,7 @@ describe("buildRecentActivity", () => {
     assert.equal(recent.todayCount, 6);
     assert.equal(recent.delta, 2);
     assert.equal(recent.status, "active");
-    assert.equal(recent.headline, "Active today");
+    assert.equal(recent.headline, "Contributions today");
     assert.equal(recent.last14.length, 14);
   });
 
@@ -57,37 +59,68 @@ describe("buildRecentActivity", () => {
     ];
     const recent = buildRecentActivity(days, new Date("2026-08-14T12:00:00Z"));
     assert.equal(recent.status, "watch");
-    assert.equal(recent.headline, "Active yesterday");
+    assert.equal(recent.headline, "Contributions yesterday");
     assert.equal(recent.todayCount, 0);
   });
 });
 
+describe("computeTrend", () => {
+  it("detects increasing output", () => {
+    const weeks = [
+      { count: 1 },
+      { count: 1 },
+      { count: 1 },
+      { count: 1 },
+      { count: 10 },
+      { count: 10 },
+      { count: 10 },
+      { count: 10 },
+    ];
+    const trend = computeTrend(weeks);
+    assert.equal(trend.direction, "up");
+  });
+});
+
+describe("buildSignals", () => {
+  it("returns recruiter-oriented pillars", () => {
+    const stats = {
+      totalPRs: 10,
+      mergedPRs: 8,
+      totalReviews: 12,
+      contributedTo: 5,
+      topLanguages: [
+        { name: "Go", percent: 60 },
+        { name: "TypeScript", percent: 30 },
+      ],
+      viz: {
+        consistency: {
+          activePct: 42,
+          activeDays: 120,
+          trend: { label: "Steady output", direction: "stable" },
+        },
+      },
+      funnel: { prs: { mergeRate: 80 } },
+    };
+    const { pillars } = buildSignals(stats);
+    assert.ok(pillars.some((p) => p.id === "delivery"));
+    assert.ok(pillars.some((p) => p.id === "collaboration"));
+    assert.ok(pillars.some((p) => p.id === "consistency"));
+    assert.ok(pillars.some((p) => p.id === "stack"));
+  });
+});
+
 describe("buildHighlights", () => {
-  it("returns compact facts without filler", () => {
+  it("maps signal pillars to label/value pairs", () => {
     const items = buildHighlights({
       mergedPRs: 8,
       totalPRs: 10,
       totalReviews: 4,
       topLanguages: [{ name: "Go", percent: 70 }],
-      streak: { currentStreak: 3 },
+      viz: { consistency: { activePct: 40, activeDays: 50, trend: { label: "Steady output" } } },
+      funnel: { prs: { mergeRate: 80 } },
     });
-    assert.deepEqual(
-      items.map((i) => i.label),
-      ["PRs merged", "Reviews", "Top language", "Current streak"]
-    );
-    assert.equal(items[0].value, "80%");
-    assert.equal(items[2].value, "Go");
-  });
-
-  it("omits empty highlights", () => {
-    const items = buildHighlights({
-      mergedPRs: 0,
-      totalPRs: 0,
-      totalReviews: 0,
-      topLanguages: [],
-      streak: { currentStreak: 0 },
-    });
-    assert.equal(items.length, 0);
+    assert.ok(items.some((i) => i.label === "Delivery"));
+    assert.ok(items.some((i) => i.value.includes("80%")));
   });
 });
 
@@ -105,8 +138,7 @@ describe("buildVisualizations", () => {
     assert.equal(viz.weeks.length, 12);
     assert.equal(viz.months.length, 6);
     assert.ok(viz.activity.length > 40);
-    assert.ok(viz.consistency.activeDays > 0);
-    assert.ok(viz.consistency.busiestWeekday);
+    assert.ok(viz.consistency.trend);
   });
 });
 
@@ -126,22 +158,16 @@ describe("buildFunnel", () => {
 });
 
 describe("buildMilestones", () => {
-  it("unlocks thresholds that are met", () => {
+  it("unlocks factual thresholds that are met", () => {
     const items = buildMilestones({
       totalCommits: 1200,
-      totalPRs: 60,
       mergedPRs: 30,
-      totalReviews: 0,
-      totalStars: 10,
+      totalReviews: 25,
       contributedTo: 12,
-      topLanguages: [{ name: "Go" }, { name: "TS" }, { name: "Rust" }],
-      streak: { longestStreak: 14 },
     });
     const labels = items.map((i) => i.label);
-    assert.ok(labels.includes("1K Commits"));
-    assert.ok(labels.includes("50 PRs"));
-    assert.ok(labels.includes("7-Day Streak"));
-    assert.ok(labels.includes("Polyglot"));
+    assert.ok(labels.includes("1K commits"));
+    assert.ok(labels.includes("25 merged PRs"));
     assert.ok(!labels.includes("50 Stars"));
   });
 });

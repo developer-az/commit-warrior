@@ -1,5 +1,6 @@
 /**
- * Today vs yesterday activity, aggregates for charts, and compact highlights.
+ * Activity signals, chart aggregates, and factual highlights.
+ * Focused on delivery, collaboration, consistency, and stack — not vanity badges.
  */
 
 const { utcToday, addUtcDays } = require("./streak");
@@ -28,7 +29,6 @@ function pct(part, whole) {
 }
 
 function weekdayIndex(iso) {
-  // UTC Sunday = 0 … Saturday = 6 (GitHub calendar convention)
   return new Date(`${iso}T12:00:00Z`).getUTCDay();
 }
 
@@ -42,6 +42,28 @@ function mondayOfWeek(iso) {
 
 function monthKey(iso) {
   return iso.slice(0, 7);
+}
+
+function computeTrend(weeks) {
+  if (!weeks || weeks.length < 8) {
+    return { direction: "stable", label: "Insufficient history", deltaPct: null };
+  }
+  const recent = weeks.slice(-4).reduce((s, w) => s + n(w.count), 0);
+  const prior = weeks.slice(-8, -4).reduce((s, w) => s + n(w.count), 0);
+  if (prior === 0 && recent === 0) {
+    return { direction: "idle", label: "No recent activity", deltaPct: 0 };
+  }
+  if (prior === 0) {
+    return { direction: "up", label: "Activity resumed", deltaPct: 100 };
+  }
+  const deltaPct = Math.round(((recent - prior) / prior) * 100);
+  if (deltaPct > 12) {
+    return { direction: "up", label: "Picking up", deltaPct };
+  }
+  if (deltaPct < -12) {
+    return { direction: "down", label: "Slowing down", deltaPct };
+  }
+  return { direction: "stable", label: "Steady output", deltaPct };
 }
 
 /**
@@ -59,7 +81,6 @@ function buildRecentActivity(days, now = new Date()) {
   const lastCalendarDate = sorted.length ? sorted[sorted.length - 1].date : null;
 
   const todayPublished = byDate.has(today);
-  const yesterdayPublished = byDate.has(yesterday);
   const todayCount = dayCount(byDate.get(today));
   const yesterdayCount = dayCount(byDate.get(yesterday));
   const priorCount = dayCount(byDate.get(prior));
@@ -84,16 +105,16 @@ function buildRecentActivity(days, now = new Date()) {
   }
 
   let status = "idle";
-  let headline = "Quiet";
+  let headline = "No activity today";
   if (todayCount > 0) {
     status = "active";
-    headline = "Active today";
+    headline = "Contributions today";
   } else if (yesterdayCount > 0) {
     status = "watch";
-    headline = "Active yesterday";
+    headline = "Contributions yesterday";
   } else if (!todayPublished && lastCalendarDate && lastCalendarDate < today) {
     status = "stale";
-    headline = "Calendar lag";
+    headline = "Calendar pending";
   }
 
   return {
@@ -106,7 +127,6 @@ function buildRecentActivity(days, now = new Date()) {
     priorCount,
     delta,
     todayPublished,
-    yesterdayPublished,
     lastCalendarDate,
     last7Count,
     last7ActiveDays,
@@ -117,7 +137,6 @@ function buildRecentActivity(days, now = new Date()) {
 }
 
 /**
- * Chart-ready aggregates derived from the contribution calendar.
  * @param {Array<{ date: string, count?: number, level?: number }>} days
  * @param {Date} [now]
  */
@@ -159,12 +178,7 @@ function buildVisualizations(days, now = new Date()) {
     for (let d = 0; d < 7; d += 1) {
       count += dayCount(byDate.get(addUtcDays(start, d)));
     }
-    weeks.push({
-      start,
-      end,
-      label: start.slice(5),
-      count,
-    });
+    weeks.push({ start, end, label: start.slice(5), count });
   }
 
   const months = [];
@@ -185,7 +199,6 @@ function buildVisualizations(days, now = new Date()) {
     });
   }
 
-  // Weekly series for the activity SVG (last ~52 weeks, Monday-aligned)
   const activity = [];
   const oldest = addUtcDays(today, -364);
   let cursor = mondayOfWeek(oldest);
@@ -201,6 +214,7 @@ function buildVisualizations(days, now = new Date()) {
   }
 
   const spanned = sorted.length || 1;
+  const trend = computeTrend(weeks);
   const consistency = {
     activeDays,
     daysTracked: spanned,
@@ -214,20 +228,16 @@ function buildVisualizations(days, now = new Date()) {
       (best, cur) => (cur.count > (best?.count || -1) ? cur : best),
       null
     ),
+    trend,
   };
 
   return { weekdays, weeks, months, activity, consistency };
 }
 
-/**
- * PR / issue funnel for the website (and optional future cards).
- */
 function buildFunnel(stats) {
   const opened = n(stats.totalPRs);
   const merged = n(stats.mergedPRs);
   const closed = n(stats.closedPRs);
-  const issuesOpened = n(stats.totalIssues);
-  const issuesClosed = n(stats.closedIssues);
   return {
     prs: {
       opened,
@@ -237,90 +247,101 @@ function buildFunnel(stats) {
       open: Math.max(0, opened - merged - closed),
     },
     issues: {
-      opened: issuesOpened,
-      closed: issuesClosed,
-      closeRate: pct(issuesClosed, issuesOpened),
+      opened: n(stats.totalIssues),
+      closed: n(stats.closedIssues),
+      closeRate: pct(stats.closedIssues, stats.totalIssues),
     },
   };
 }
 
 /**
- * Short labeled facts only. Skip anything we cannot state cleanly.
+ * Recruiter-oriented signal pillars derived from public GitHub data.
  */
-function buildHighlights(stats) {
-  const items = [];
-  const mergeRate = pct(stats.mergedPRs, stats.totalPRs);
-  if (mergeRate != null) {
-    items.push({
-      label: "PRs merged",
-      value: `${mergeRate}%`,
+function buildSignals(stats) {
+  const viz = stats.viz || {};
+  const funnel = stats.funnel || buildFunnel(stats);
+  const consistency = viz.consistency || {};
+  const trend = consistency.trend || computeTrend(viz.weeks);
+  const mergeRate = funnel.prs.mergeRate;
+  const reviews = n(stats.totalReviews);
+  const contributed = n(stats.contributedTo);
+  const langs = stats.topLanguages || [];
+
+  const pillars = [];
+
+  if (mergeRate != null || n(stats.mergedPRs)) {
+    pillars.push({
+      id: "delivery",
+      title: "Delivery",
+      metric:
+        mergeRate != null ? `${mergeRate}% merged` : formatCount(stats.mergedPRs),
+      detail:
+        mergeRate != null
+          ? `${formatCount(stats.mergedPRs)} of ${formatCount(stats.totalPRs)} PRs landed`
+          : `${formatCount(stats.mergedPRs)} merged pull requests`,
     });
   }
-  if (n(stats.totalReviews)) {
-    items.push({
-      label: "Reviews",
-      value: formatCount(stats.totalReviews),
+
+  if (reviews || contributed) {
+    pillars.push({
+      id: "collaboration",
+      title: "Collaboration",
+      metric: reviews ? formatCount(reviews) : formatCount(contributed),
+      detail: reviews
+        ? `${formatCount(reviews)} code reviews · ${formatCount(contributed)} external repos`
+        : `Contributions across ${formatCount(contributed)} repositories`,
     });
   }
-  const top = stats.topLanguages?.[0];
-  if (top?.name) {
-    items.push({
-      label: "Top language",
-      value: top.name,
+
+  if (consistency.activePct != null) {
+    pillars.push({
+      id: "consistency",
+      title: "Consistency",
+      metric: `${consistency.activePct}% active`,
+      detail: `${trend.label} · ${formatCount(consistency.activeDays)} days with output in the last year`,
     });
   }
-  const streak = n(stats.streak?.currentStreak);
-  if (streak) {
-    items.push({
-      label: "Current streak",
-      value: `${streak} day${streak === 1 ? "" : "s"}`,
+
+  if (langs.length) {
+    const names = langs
+      .slice(0, 3)
+      .map((l) => l.name)
+      .join(", ");
+    pillars.push({
+      id: "stack",
+      title: "Primary stack",
+      metric: langs[0].name,
+      detail:
+        langs.length > 1
+          ? `${names} · ${langs.length} languages in owned repos`
+          : "Dominant language in owned repositories",
     });
   }
-  const consistency = stats.viz?.consistency;
-  if (consistency?.activePct) {
-    items.push({
-      label: "Active days",
-      value: `${consistency.activePct}%`,
-    });
-  }
-  if (consistency?.busiestWeekday?.count) {
-    items.push({
-      label: "Busiest day",
-      value: consistency.busiestWeekday.label,
-    });
-  }
-  return items;
+
+  return {
+    pillars,
+    trend,
+    summary: pillars.map((p) => p.metric).join(" · "),
+  };
 }
 
-/**
- * Lightweight trophy-style milestones for README flair.
- */
+/** @deprecated use buildSignals — kept for tests */
+function buildHighlights(stats) {
+  return (buildSignals(stats).pillars || []).map((p) => ({
+    label: p.title,
+    value: p.metric,
+  }));
+}
+
+/** Legacy README badge API — not surfaced on the professional profile view */
 function buildMilestones(stats) {
   const checks = [
-    { id: "commits-100", label: "100 Commits", ok: n(stats.totalCommits) >= 100 },
-    { id: "commits-1k", label: "1K Commits", ok: n(stats.totalCommits) >= 1000 },
-    { id: "prs-50", label: "50 PRs", ok: n(stats.totalPRs) >= 50 },
-    { id: "merged-25", label: "25 Merged", ok: n(stats.mergedPRs) >= 25 },
-    { id: "reviews-25", label: "25 Reviews", ok: n(stats.totalReviews) >= 25 },
-    { id: "stars-50", label: "50 Stars", ok: n(stats.totalStars) >= 50 },
-    {
-      id: "streak-7",
-      label: "7-Day Streak",
-      ok: n(stats.streak?.longestStreak) >= 7,
-    },
-    {
-      id: "streak-30",
-      label: "30-Day Streak",
-      ok: n(stats.streak?.longestStreak) >= 30,
-    },
-    {
-      id: "multi-lang",
-      label: "Polyglot",
-      ok: (stats.topLanguages || []).length >= 3,
-    },
+    { id: "commits-1k", label: "1K commits", ok: n(stats.totalCommits) >= 1000 },
+    { id: "merged-25", label: "25 merged PRs", ok: n(stats.mergedPRs) >= 25 },
+    { id: "reviews-25", label: "25 reviews", ok: n(stats.totalReviews) >= 25 },
     {
       id: "contrib-10",
-      label: "10 Repos",
+      label: "10 repo contributions",
       ok: n(stats.contributedTo) >= 10,
     },
   ];
@@ -331,8 +352,10 @@ module.exports = {
   buildRecentActivity,
   buildVisualizations,
   buildFunnel,
+  buildSignals,
   buildHighlights,
   buildMilestones,
+  computeTrend,
   formatCount,
   dayCount,
 };
