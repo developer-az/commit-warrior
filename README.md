@@ -1,12 +1,12 @@
 # Commit Warrior
 
-Dynamically generated **GitHub README stats** — commits, pull requests, merged PRs, closed issues, code reviews, streaks, contribution graphs, activity charts, milestones, stars, and top languages. Use it as a website or embed SVG cards in any profile README.
+**Engineering activity profiles** from public GitHub data — delivery, collaboration, cadence, and stack. The website is built for review (hiring, open-source triage); README SVG embeds are optional.
 
 ## Two ways to use it
 
-### 1. Website
+### 1. Activity profile (website)
 
-Run the app, open it in a browser, enter a GitHub username, preview the cards, and copy the markdown.
+Run the app, enter a public GitHub username, and read a structured summary: signal pillars, recent cadence, work patterns, and grouped career totals.
 
 ```bash
 npm install
@@ -15,19 +15,16 @@ npm start
 # → http://localhost:3000
 ```
 
-The website shows today vs yesterday, language / weekday / PR / weekly charts, and copy-ready README markdown. Career totals are all-time.
+Signals include merge rate, review volume, calendar consistency, and primary languages. Data comes from GitHub’s public API and contribution calendar (cached ~30 minutes).
 
-### 2. README embeds (preview / markdown image)
+### 2. README embeds (optional)
 
-Same idea as [github-readme-stats](https://github.com/anuraghazra/github-readme-stats): the API returns an SVG. GitHub’s README renderer requests that URL and shows a live card.
+SVG endpoints for profile READMEs. Defaults on the site favor the **Professional** theme and hide rank badges.
 
 ```md
-[![GitHub stats](https://YOUR_HOST/api/stats?username=YOUR_USERNAME&show_icons=true)](https://github.com/YOUR_USERNAME)
-![Top Languages](https://YOUR_HOST/api/top-langs?username=YOUR_USERNAME&layout=compact)
-![GitHub Streak](https://YOUR_HOST/api/streak?username=YOUR_USERNAME)
-![Milestones](https://YOUR_HOST/api/milestones?username=YOUR_USERNAME)
-![Contribution Graph](https://YOUR_HOST/api/graph?username=YOUR_USERNAME)
-![Activity Graph](https://YOUR_HOST/api/activity?username=YOUR_USERNAME)
+[![GitHub stats](https://YOUR_HOST/api/stats?username=YOUR_USERNAME&theme=professional&hide_rank=true)](https://github.com/YOUR_USERNAME)
+![Top Languages](https://YOUR_HOST/api/top-langs?username=YOUR_USERNAME&theme=professional&layout=compact)
+![Activity Graph](https://YOUR_HOST/api/activity?username=YOUR_USERNAME&theme=professional)
 ```
 
 Replace `YOUR_HOST` with your deployment URL (or `http://localhost:3000` while testing).

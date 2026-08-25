@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Commit Warrior</title>
-  <meta name="description" content="Look up a GitHub username. See live activity charts, career stats, and copy README cards." />
+  <title>Commit Warrior — Engineering Activity Profile</title>
+  <meta name="description" content="Public GitHub activity summarized for hiring review: delivery, collaboration, consistency, and stack. Optional README embeds." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560;9..144,650&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/styles.css" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 </head>
@@ -17,22 +17,22 @@
   <header class="topbar">
     <a class="brand-mark" href="/" aria-label="Commit Warrior home">
       <span class="brand-glyph" aria-hidden="true"></span>
-      Commit Warrior
+      <span class="brand-text">Commit Warrior</span>
     </a>
     <nav class="topnav">
-      <a href="https://github.com/developer-az/commit-warrior" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://github.com/developer-az/commit-warrior" target="_blank" rel="noopener">Source</a>
     </nav>
   </header>
 
   <main>
     <section class="hero" id="lookup">
-      <p class="brand-hero">Commit Warrior</p>
-      <h1>GitHub stats for your README</h1>
-      <p class="lede">Enter a username. See today vs yesterday, charts that summarize the year, then copy the cards.</p>
+      <p class="eyebrow">Public GitHub activity</p>
+      <h1>Engineering profile from commit history</h1>
+      <p class="lede">Summarizes shipping, review work, cadence, and language mix from a username. Data is sourced from GitHub’s public API and contribution calendar.</p>
       <form class="hero-form" id="lookup-form" autocomplete="off">
         <label class="sr-only" for="username">GitHub username</label>
         <div class="input-shell">
-          <span class="input-prefix" aria-hidden="true">@</span>
+          <span class="input-prefix" aria-hidden="true">github.com/</span>
           <input
             id="username"
             name="username"
@@ -44,56 +44,61 @@
           />
         </div>
         <button type="submit" id="generate-btn">
-          <span>Look up</span>
+          <span>Load profile</span>
         </button>
       </form>
-      <p class="hero-hint" id="status-line">Public profiles only.</p>
+      <p class="hero-hint" id="status-line">Public repositories and profiles only.</p>
     </section>
 
     <section class="report" id="generator" hidden>
-      <div class="profile-strip">
-        <img id="avatar" alt="" width="48" height="48" />
-        <div>
+      <header class="profile-strip">
+        <img id="avatar" alt="" width="52" height="52" />
+        <div class="profile-copy">
           <p class="profile-name" id="profile-name"></p>
           <a class="profile-link" id="profile-link" target="_blank" rel="noopener"></a>
+          <p class="profile-meta" id="profile-meta"></p>
         </div>
         <div class="meta-right">
-          <span class="rank-pill" id="rank-pill"></span>
-          <span class="live-line">
+          <span class="freshness">
             <span class="live-dot" aria-hidden="true"></span>
             <span id="live-label">Live</span>
             <time id="served-at" datetime=""></time>
           </span>
         </div>
-      </div>
+      </header>
 
-      <div class="panel">
+      <section class="signals" id="signals" aria-label="Activity signals"></section>
+
+      <section class="panel">
         <div class="panel-head">
-          <h2>Today</h2>
+          <div>
+            <h2>Recent cadence</h2>
+            <p class="panel-sub">Contribution counts from GitHub’s calendar</p>
+          </div>
           <span class="status-chip" id="status-chip"></span>
         </div>
         <div class="delta-board" id="delta-board" aria-live="polite"></div>
         <div id="sparkline" class="sparkline-host"></div>
-      </div>
+      </section>
 
-      <div class="highlights" id="highlights"></div>
-
-      <div class="panel viz-panel">
+      <section class="panel">
         <div class="panel-head">
-          <h2>Year at a glance</h2>
-          <span class="panel-note" id="consistency-note"></span>
+          <div>
+            <h2>Work patterns</h2>
+            <p class="panel-sub" id="consistency-note"></p>
+          </div>
         </div>
         <div class="viz-grid">
           <figure class="viz-block">
-            <figcaption>Languages</figcaption>
-            <div id="lang-donut" class="viz-host"></div>
+            <figcaption>Language mix</figcaption>
+            <div id="lang-stack" class="viz-host"></div>
           </figure>
           <figure class="viz-block">
-            <figcaption>Weekday rhythm</figcaption>
+            <figcaption>Weekly rhythm</figcaption>
             <div id="weekday-chart" class="viz-host"></div>
           </figure>
           <figure class="viz-block">
-            <figcaption>PR funnel</figcaption>
+            <figcaption>Pull request throughput</figcaption>
             <div id="funnel-chart" class="viz-host"></div>
           </figure>
           <figure class="viz-block span-wide">
@@ -101,18 +106,28 @@
             <div id="weekly-chart" class="viz-host"></div>
           </figure>
           <figure class="viz-block span-wide">
-            <figcaption>Monthly trend</figcaption>
+            <figcaption>Six-month volume</figcaption>
             <div id="monthly-chart" class="viz-host"></div>
           </figure>
         </div>
-        <div class="milestones" id="milestones"></div>
-      </div>
+      </section>
 
-      <div class="metrics" id="metrics"></div>
-
-      <div class="panel">
+      <section class="ledger">
         <div class="panel-head">
-          <h2>README cards</h2>
+          <div>
+            <h2>Career totals</h2>
+            <p class="panel-sub">All-time where noted · calendar year for contributions</p>
+          </div>
+        </div>
+        <div class="ledger-groups" id="ledger"></div>
+      </section>
+
+      <section class="panel embed-panel">
+        <div class="panel-head">
+          <div>
+            <h2>README embeds</h2>
+            <p class="panel-sub">Optional SVG cards for a profile README — not required for review</p>
+          </div>
           <div class="controls">
             <label>
               Theme
@@ -121,9 +136,6 @@
                 <option value="default">GitHub</option>
                 <option value="dark">Dark</option>
                 <option value="light">Light</option>
-                <option value="tokyonight">Tokyo Night</option>
-                <option value="radical">Radical</option>
-                <option value="transparent">Transparent</option>
               </select>
             </label>
             <label class="check">
@@ -131,22 +143,21 @@
               Icons
             </label>
             <label class="check">
-              <input type="checkbox" id="hide-rank" />
+              <input type="checkbox" id="hide-rank" checked />
               Hide rank
             </label>
             <label class="check">
               <input type="checkbox" id="compact-langs" checked />
-              Compact
+              Compact languages
             </label>
           </div>
         </div>
         <div class="card-picks" id="card-picks">
           <label class="check"><input type="checkbox" data-card="stats" checked /> Stats</label>
           <label class="check"><input type="checkbox" data-card="langs" checked /> Languages</label>
-          <label class="check"><input type="checkbox" data-card="streak" checked /> Streak</label>
-          <label class="check"><input type="checkbox" data-card="graph" checked /> Graph</label>
-          <label class="check"><input type="checkbox" data-card="activity" checked /> Activity</label>
-          <label class="check"><input type="checkbox" data-card="milestones" checked /> Milestones</label>
+          <label class="check"><input type="checkbox" data-card="activity" checked /> Activity trend</label>
+          <label class="check"><input type="checkbox" data-card="graph" /> Contribution graph</label>
+          <label class="check"><input type="checkbox" data-card="streak" /> Streak</label>
         </div>
         <div class="card-stage">
           <figure class="card-frame" data-preview="stats">
@@ -157,29 +168,28 @@
             <figcaption>Languages</figcaption>
             <img id="langs-card" alt="Languages card" />
           </figure>
-          <figure class="card-frame" data-preview="streak">
-            <figcaption>Streak</figcaption>
-            <img id="streak-card" alt="Streak card" />
-          </figure>
-          <figure class="card-frame" data-preview="milestones">
-            <figcaption>Milestones</figcaption>
-            <img id="milestones-card" alt="Milestones card" />
+          <figure class="card-frame span-full" data-preview="activity">
+            <figcaption>Activity</figcaption>
+            <img id="activity-card" alt="Activity graph" />
           </figure>
           <figure class="card-frame span-full" data-preview="graph">
             <figcaption>Graph</figcaption>
             <img id="graph-card" alt="Contribution graph" />
           </figure>
-          <figure class="card-frame span-full" data-preview="activity">
-            <figcaption>Activity</figcaption>
-            <img id="activity-card" alt="Activity graph" />
+          <figure class="card-frame" data-preview="streak">
+            <figcaption>Streak</figcaption>
+            <img id="streak-card" alt="Streak card" />
           </figure>
         </div>
-      </div>
+      </section>
     </section>
 
     <section class="embed" id="embed" hidden>
       <div class="panel-head">
-        <h2>Markdown</h2>
+        <div>
+          <h2>Markdown</h2>
+          <p class="panel-sub">Paste into a profile README if you want embeds</p>
+        </div>
         <button type="button" class="copy-btn" id="copy-btn">Copy</button>
       </div>
       <pre class="code-block"><code id="markdown-output"></code></pre>
@@ -187,7 +197,7 @@
   </main>
 
   <footer class="footer">
-    <p><a href="https://github.com/developer-az/commit-warrior" target="_blank" rel="noopener">Source</a></p>
+    <p>Metrics from public GitHub data. Cached ~30 minutes.</p>
   </footer>
 
   <script src="/app.js"></script>

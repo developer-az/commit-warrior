@@ -26,8 +26,8 @@ const sample = {
     { name: "Go", color: "#00ADD8", percent: 18 },
   ],
   milestones: [
-    { id: "commits-1k", label: "1K Commits" },
-    { id: "prs-50", label: "50 PRs" },
+    { id: "commits-1k", label: "1K commits" },
+    { id: "merged-25", label: "25 merged PRs" },
   ],
   viz: {
     activity: [
@@ -80,8 +80,8 @@ describe("SVG cards", () => {
 
   it("renders milestones card", () => {
     const svg = renderMilestonesCard(sample, { theme: "professional" });
-    assert.match(svg, /Ada's Milestones/);
-    assert.match(svg, /1K Commits/);
-    assert.match(svg, /50 PRs/);
+    assert.match(svg, /Activity thresholds/);
+    assert.match(svg, /1K commits/);
+    assert.match(svg, /25 merged PRs/);
   });
 });

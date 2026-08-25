@@ -14,10 +14,12 @@
 
   let currentUser = "";
 
-  const ACCENT = "#d4b483";
-  const MUTED_BAR = "#2a3340";
-  const INK = "#f4f0e8";
-  const MUTED = "#8b93a1";
+  const ACCENT = "#6b9bd1";
+  const BAR = "#252f3d";
+  const INK = "#e6e9ef";
+  const MUTED = "#6b7585";
+  const POSITIVE = "#5a9a7a";
+  const WATCH = "#b8945a";
 
   function originBase() {
     return window.location.origin;
@@ -61,10 +63,6 @@
     return `${originBase()}/api/activity?${qs({ username, ...themeParams() })}`;
   }
 
-  function milestonesUrl(username) {
-    return `${originBase()}/api/milestones?${qs({ username, ...themeParams() })}`;
-  }
-
   function formatNum(value) {
     return new Intl.NumberFormat("en-US").format(Number(value) || 0);
   }
@@ -93,6 +91,14 @@
     }
   }
 
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
   function friendlyError(message) {
     const msg = String(message || "");
     if (/not found/i.test(msg)) return "No GitHub user with that name.";
@@ -119,6 +125,42 @@
       .map((el) => el.dataset.card);
   }
 
+  function renderProfileMeta(stats) {
+    const parts = [];
+    if (stats.partial) {
+      parts.push("Public REST data");
+    } else if (stats.fallbackReason) {
+      parts.push("Partial GraphQL · REST fallback");
+    } else if (!stats.partial) {
+      parts.push("Full GitHub data");
+    }
+    if (stats.calendarSource) {
+      parts.push(`Calendar via ${stats.calendarSource}`);
+    }
+    if (stats.signals?.trend?.label) {
+      parts.push(stats.signals.trend.label);
+    }
+    document.getElementById("profile-meta").textContent = parts.join(" · ");
+  }
+
+  function renderSignals(stats) {
+    const host = document.getElementById("signals");
+    const pillars = stats.signals?.pillars || [];
+    if (!pillars.length) {
+      host.innerHTML = "";
+      return;
+    }
+    host.innerHTML = pillars
+      .map(
+        (p) => `<article class="signal-card">
+          <span class="signal-title">${escapeHtml(p.title)}</span>
+          <strong>${escapeHtml(p.metric)}</strong>
+          <span class="signal-detail">${escapeHtml(p.detail)}</span>
+        </article>`
+      )
+      .join("");
+  }
+
   function renderRecent(stats) {
     const recent = stats.recent || {};
     const chip = document.getElementById("status-chip");
@@ -128,15 +170,15 @@
     const served = document.getElementById("served-at");
     const when = formatWhen(stats.servedAt || recent.generatedAt);
     served.dateTime = stats.servedAt || recent.generatedAt || "";
-    served.textContent = when ? when : "";
+    served.textContent = when ? `· ${when}` : "";
     document.getElementById("live-label").textContent = stats.cached
       ? "Cached"
       : "Live";
 
-    const todayValue = recent.todayPublished ? formatNum(recent.todayCount) : "n/a";
+    const todayValue = recent.todayPublished ? formatNum(recent.todayCount) : "—";
     const changeValue = recent.todayPublished
       ? `${Number(recent.delta) > 0 ? "+" : ""}${formatNum(recent.delta)}`
-      : "n/a";
+      : "—";
 
     const cards = [
       {
@@ -150,9 +192,9 @@
         note: formatDay(recent.yesterday),
       },
       {
-        label: "Change",
+        label: "Day change",
         value: changeValue,
-        note: recent.todayPublished ? "vs yesterday" : "today pending",
+        note: recent.todayPublished ? "vs yesterday" : "today not published",
         tone:
           recent.todayPublished && Number(recent.delta) > 0
             ? "up"
@@ -163,7 +205,7 @@
       {
         label: "Last 7 days",
         value: formatNum(recent.last7Count),
-        note: `${formatNum(recent.last7ActiveDays)} active`,
+        note: `${formatNum(recent.last7ActiveDays)} active days`,
       },
     ];
 
@@ -187,72 +229,39 @@
       return;
     }
     const w = 720;
-    const h = 48;
+    const h = 44;
     const max = Math.max(1, ...days.map((d) => Number(d.count) || 0));
-    const gap = 5;
+    const gap = 4;
     const barW = (w - gap * (days.length - 1)) / days.length;
     const bars = days
       .map((d, i) => {
         const count = Number(d.count) || 0;
-        const bh = Math.max(count ? 5 : 2, (count / max) * (h - 6));
+        const bh = Math.max(count ? 4 : 2, (count / max) * (h - 4));
         const x = i * (barW + gap);
         const y = h - bh;
-        const fill = count ? ACCENT : MUTED_BAR;
-        return `<rect x="${x}" y="${y}" width="${barW}" height="${bh}" rx="1.5" fill="${fill}"><title>${d.date}: ${count}</title></rect>`;
+        const fill = count ? ACCENT : BAR;
+        return `<rect x="${x}" y="${y}" width="${barW}" height="${bh}" fill="${fill}"><title>${d.date}: ${count}</title></rect>`;
       })
       .join("");
     host.innerHTML = `<svg class="sparkline" viewBox="0 0 ${w} ${h}" role="img" aria-label="Last 14 days">${bars}</svg>`;
   }
 
-  function renderHighlights(stats) {
-    const host = document.getElementById("highlights");
-    const items = stats.highlights || [];
-    host.innerHTML = items
-      .map(
-        (item) => `<div class="stat">
-          <span class="label">${item.label}</span>
-          <strong>${item.value}</strong>
-        </div>`
-      )
-      .join("");
-  }
-
-  function renderLangDonut(langs) {
-    const host = document.getElementById("lang-donut");
+  function renderLangStack(langs) {
+    const host = document.getElementById("lang-stack");
     const list = (langs || []).slice(0, 5);
     if (!list.length) {
-      host.innerHTML = `<p class="viz-empty">No language data</p>`;
+      host.innerHTML = `<p class="viz-empty">No public language breakdown</p>`;
       return;
     }
-    const size = 160;
-    const cx = 80;
-    const cy = 72;
-    const r = 46;
-    const stroke = 18;
-    const circ = 2 * Math.PI * r;
-    let offset = 0;
-    const arcs = list
-      .map((lang) => {
-        const frac = Math.max(0, Number(lang.percent) || 0) / 100;
-        const dash = frac * circ;
-        const el = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${lang.color || ACCENT}" stroke-width="${stroke}" stroke-dasharray="${dash} ${circ - dash}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})"/>`;
-        offset += dash;
-        return el;
-      })
-      .join("");
-    const legend = list
+    host.innerHTML = `<div class="lang-bars">${list
       .map(
-        (lang) =>
-          `<li><span class="swatch" style="background:${lang.color || ACCENT}"></span>${escapeHtml(lang.name)} <em>${lang.percent}%</em></li>`
+        (lang) => `<div class="lang-row">
+          <span>${escapeHtml(lang.name)}</span>
+          <div class="lang-track"><i style="width:${lang.percent}%;background:${lang.color || ACCENT}"></i></div>
+          <em>${lang.percent}%</em>
+        </div>`
       )
-      .join("");
-    host.innerHTML = `<div class="donut-wrap">
-      <svg viewBox="0 0 ${size} ${size}" class="donut" role="img" aria-label="Language mix">${arcs}
-        <circle cx="${cx}" cy="${cy}" r="${r - stroke / 2 - 4}" fill="#121821"/>
-        <text x="${cx}" y="${cy + 4}" text-anchor="middle" fill="${INK}" font-size="13" font-weight="600">${escapeHtml(list[0].name)}</text>
-      </svg>
-      <ul class="legend">${legend}</ul>
-    </div>`;
+      .join("")}</div>`;
   }
 
   function renderWeekdayChart(weekdays) {
@@ -264,17 +273,17 @@
     }
     const max = Math.max(1, ...rows.map((d) => Number(d.count) || 0));
     const w = 280;
-    const h = 140;
-    const gap = 8;
+    const h = 130;
+    const gap = 6;
     const barW = (w - gap * (rows.length - 1)) / rows.length;
     const bars = rows
       .map((d, i) => {
         const count = Number(d.count) || 0;
-        const bh = Math.max(count ? 6 : 2, (count / max) * 88);
+        const bh = Math.max(count ? 4 : 2, (count / max) * 80);
         const x = i * (barW + gap);
-        const y = 100 - bh;
-        return `<rect x="${x}" y="${y}" width="${barW}" height="${bh}" rx="2" fill="${count ? ACCENT : MUTED_BAR}"><title>${d.label}: ${count}</title></rect>
-          <text x="${x + barW / 2}" y="118" text-anchor="middle" fill="${MUTED}" font-size="10">${d.label[0]}</text>`;
+        const y = 92 - bh;
+        return `<rect x="${x}" y="${y}" width="${barW}" height="${bh}" fill="${count ? ACCENT : BAR}"><title>${d.label}: ${count}</title></rect>
+          <text x="${x + barW / 2}" y="110" text-anchor="middle" fill="${MUTED}" font-size="9" font-family="IBM Plex Sans, sans-serif">${d.label.slice(0, 1)}</text>`;
       })
       .join("");
     host.innerHTML = `<svg viewBox="0 0 ${w} ${h}" class="chart" role="img" aria-label="Contributions by weekday">${bars}</svg>`;
@@ -285,28 +294,28 @@
     const prs = funnel?.prs || {};
     const opened = Number(prs.opened) || 0;
     if (!opened) {
-      host.innerHTML = `<p class="viz-empty">No pull requests</p>`;
+      host.innerHTML = `<p class="viz-empty">No authored pull requests</p>`;
       return;
     }
     const rows = [
       { label: "Opened", value: opened, color: MUTED },
-      { label: "Merged", value: Number(prs.merged) || 0, color: "#7dba9f" },
-      { label: "Closed", value: Number(prs.closed) || 0, color: "#c76c76" },
+      { label: "Merged", value: Number(prs.merged) || 0, color: POSITIVE },
+      { label: "Closed", value: Number(prs.closed) || 0, color: WATCH },
     ];
     const max = Math.max(...rows.map((r) => r.value), 1);
     const html = rows
       .map((r) => {
-        const pct = Math.round((r.value / max) * 100);
+        const width = Math.round((r.value / max) * 100);
         return `<div class="funnel-row">
           <span>${r.label}</span>
-          <div class="funnel-track"><span style="width:${pct}%;background:${r.color}"></span></div>
+          <div class="funnel-track"><span style="width:${width}%;background:${r.color}"></span></div>
           <strong>${formatNum(r.value)}</strong>
         </div>`;
       })
       .join("");
     const rate =
       prs.mergeRate != null
-        ? `<p class="funnel-rate">${prs.mergeRate}% merge rate</p>`
+        ? `<p class="funnel-rate">${prs.mergeRate}% of opened PRs merged</p>`
         : "";
     host.innerHTML = `${html}${rate}`;
   }
@@ -320,79 +329,96 @@
     }
     const max = Math.max(1, ...rows.map((d) => Number(d.count) || 0));
     const w = 640;
-    const h = 120;
-    const gap = 6;
+    const h = 110;
+    const gap = 5;
     const barW = (w - gap * (rows.length - 1)) / rows.length;
     const bars = rows
       .map((d, i) => {
         const count = Number(d.count) || 0;
-        const bh = Math.max(count ? 4 : 2, (count / max) * 78);
+        const bh = Math.max(count ? 3 : 2, (count / max) * 72);
         const x = i * (barW + gap);
-        const y = 86 - bh;
+        const y = 78 - bh;
         const label = d.label || d.key || "";
-        return `<rect x="${x}" y="${y}" width="${barW}" height="${bh}" rx="2" fill="${count ? ACCENT : MUTED_BAR}"><title>${label}: ${count}</title></rect>
-          <text x="${x + barW / 2}" y="106" text-anchor="middle" fill="${MUTED}" font-size="9">${escapeHtml(String(label).slice(-5))}</text>`;
+        return `<rect x="${x}" y="${y}" width="${barW}" height="${bh}" fill="${count ? ACCENT : BAR}"><title>${label}: ${count}</title></rect>
+          <text x="${x + barW / 2}" y="96" text-anchor="middle" fill="${MUTED}" font-size="8" font-family="IBM Plex Sans, sans-serif">${escapeHtml(String(label).slice(-5))}</text>`;
       })
       .join("");
     host.innerHTML = `<svg viewBox="0 0 ${w} ${h}" class="chart wide" role="img" aria-label="${aria}">${bars}</svg>`;
-  }
-
-  function renderMilestonesList(items) {
-    const host = document.getElementById("milestones");
-    const list = items || [];
-    if (!list.length) {
-      host.innerHTML = "";
-      return;
-    }
-    host.innerHTML = list
-      .map((m) => `<span class="milestone-chip">${escapeHtml(m.label)}</span>`)
-      .join("");
   }
 
   function renderVisualizations(stats) {
     const viz = stats.viz || {};
     const consistency = viz.consistency || {};
     const note = document.getElementById("consistency-note");
+    const trend = consistency.trend || stats.signals?.trend;
+    const parts = [];
     if (consistency.activePct != null) {
-      note.textContent = `${consistency.activePct}% active days · avg ${consistency.avgPerActiveDay}/active day`;
-    } else {
-      note.textContent = "";
+      parts.push(`${consistency.activePct}% of tracked days had output`);
     }
-    renderLangDonut(stats.topLanguages);
+    if (consistency.avgPerActiveDay) {
+      parts.push(`${consistency.avgPerActiveDay} avg per active day`);
+    }
+    if (trend?.label) {
+      parts.push(trend.label);
+    }
+    note.textContent = parts.join(" · ");
+
+    renderLangStack(stats.topLanguages);
     renderWeekdayChart(viz.weekdays);
     renderFunnel(stats.funnel);
     renderBarSeries("weekly-chart", viz.weeks, "Last 12 weeks");
     renderBarSeries("monthly-chart", viz.months, "Monthly contributions");
-    renderMilestonesList(stats.milestones);
   }
 
-  function renderMetrics(stats) {
-    const catalog = [
-      ["Commits", stats.totalCommits],
-      ["Pull requests", stats.totalPRs],
-      ["PRs merged", stats.mergedPRs],
-      ["Issues closed", stats.closedIssues],
-      ["Reviews", stats.totalReviews],
-      ["Repos contributed to", stats.contributedTo],
-      ["Stars", stats.totalStars],
-      ["This year", stats.yearContributions],
+  function renderLedger(stats) {
+    const funnel = stats.funnel || {};
+    const groups = [
+      {
+        title: "Shipping",
+        rows: [
+          ["Commits (all-time)", stats.totalCommits],
+          ["Pull requests", stats.totalPRs],
+          ["Merged", stats.mergedPRs],
+          ["Issues closed", stats.closedIssues],
+        ],
+      },
+      {
+        title: "Collaboration",
+        rows: [
+          ["Code reviews", stats.totalReviews],
+          ["External repos", stats.contributedTo],
+          [
+            "Merge rate",
+            funnel.prs?.mergeRate != null ? `${funnel.prs.mergeRate}%` : null,
+          ],
+        ],
+      },
+      {
+        title: "Reach",
+        rows: [
+          ["Contributions this year", stats.yearContributions],
+          ["Repository stars", stats.totalStars],
+          ["Followers", stats.followers],
+        ],
+      },
     ];
-    document.getElementById("metrics").innerHTML = catalog
+
+    document.getElementById("ledger").innerHTML = groups
       .map(
-        ([label, value]) => `<div class="stat">
-          <span class="label">${label}</span>
-          <strong>${formatNum(value)}</strong>
+        (g) => `<div class="ledger-group">
+          <h3>${g.title}</h3>
+          ${g.rows
+            .filter(([, v]) => v != null && v !== "")
+            .map(
+              ([label, value]) => `<div class="ledger-row">
+                <span>${label}</span>
+                <strong>${typeof value === "number" ? formatNum(value) : escapeHtml(String(value))}</strong>
+              </div>`
+            )
+            .join("")}
         </div>`
       )
       .join("");
-  }
-
-  function escapeHtml(s) {
-    return String(s)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
   }
 
   function updatePreview(username) {
@@ -403,7 +429,6 @@
       streak: streakUrl(username),
       graph: graphUrl(username),
       activity: activityUrl(username),
-      milestones: milestonesUrl(username),
     };
 
     document.getElementById("stats-card").src = `${urls.stats}&_=${bust}`;
@@ -411,7 +436,6 @@
     document.getElementById("streak-card").src = `${urls.streak}&_=${bust}`;
     document.getElementById("graph-card").src = `${urls.graph}&_=${bust}`;
     document.getElementById("activity-card").src = `${urls.activity}&_=${bust}`;
-    document.getElementById("milestones-card").src = `${urls.milestones}&_=${bust}`;
 
     const selected = new Set(selectedCards());
     document.querySelectorAll("[data-preview]").forEach((el) => {
@@ -425,12 +449,15 @@
       );
     }
     if (selected.has("langs")) lines.push(`![Top Languages](${urls.langs})`);
-    if (selected.has("streak")) lines.push(`![GitHub Streak](${urls.streak})`);
-    if (selected.has("milestones")) {
-      lines.push(`![Milestones](${urls.milestones})`);
+    if (selected.has("activity")) {
+      lines.push(`![Activity Graph](${urls.activity})`);
     }
-    if (selected.has("graph")) lines.push(`![Contribution Graph](${urls.graph})`);
-    if (selected.has("activity")) lines.push(`![Activity Graph](${urls.activity})`);
+    if (selected.has("graph")) {
+      lines.push(`![Contribution Graph](${urls.graph})`);
+    }
+    if (selected.has("streak")) {
+      lines.push(`![GitHub Streak](${urls.streak})`);
+    }
     document.getElementById("markdown-output").textContent = lines.join("\n");
   }
 
@@ -441,7 +468,7 @@
     generateBtn.disabled = true;
     const btnLabel = generateBtn.querySelector("span");
     if (btnLabel) btnLabel.textContent = "Loading…";
-    setStatus("Looking up GitHub…", "");
+    setStatus("Fetching public GitHub data…", "");
 
     try {
       const res = await fetch(`/api/json?username=${encodeURIComponent(clean)}`);
@@ -456,20 +483,18 @@
       const link = document.getElementById("profile-link");
       link.href = data.url || `https://github.com/${data.login}`;
       link.textContent = `@${data.login}`;
-      document.getElementById("rank-pill").textContent = data.rank?.level
-        ? data.rank.level
-        : "";
 
+      renderProfileMeta(data);
+      renderSignals(data);
       renderRecent(data);
-      renderHighlights(data);
       renderVisualizations(data);
-      renderMetrics(data);
+      renderLedger(data);
       updatePreview(data.login);
 
       generator.hidden = false;
       embed.hidden = false;
       generator.scrollIntoView({ behavior: "smooth", block: "start" });
-      setStatus(`Loaded @${data.login}.`, "ok");
+      setStatus(`Profile loaded for @${data.login}.`, "ok");
 
       const url = new URL(window.location.href);
       url.searchParams.set("username", data.login);
@@ -480,7 +505,7 @@
       embed.hidden = true;
     } finally {
       generateBtn.disabled = false;
-      if (btnLabel) btnLabel.textContent = "Look up";
+      if (btnLabel) btnLabel.textContent = "Load profile";
     }
   }
 
