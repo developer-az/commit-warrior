@@ -7,6 +7,8 @@ const GITHUB_API = "https://api.github.com";
 const GITHUB_GRAPHQL = "https://api.github.com/graphql";
 
 const cache = new Map();
+/** @type {Map<string, Promise<object>>} */
+const inFlight = new Map();
 const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
 /** When a configured token returns 401, stop attaching it and use public REST. */
@@ -658,22 +660,10 @@ async function fetchStatsREST(username) {
 }
 
 /**
- * @param {string} username
+ * @param {string} login normalized GitHub login
  * @returns {Promise<object>}
  */
-async function fetchUserStats(username) {
-  const login = String(username || "")
-    .trim()
-    .replace(/^@/, "");
-  if (!/^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,38}$/.test(login)) {
-    const err = new Error("Invalid GitHub username");
-    err.status = 400;
-    throw err;
-  }
-
-  const cached = cacheGet(`stats:${login.toLowerCase()}`);
-  if (cached) return { ...cached, cached: true };
-
+async function loadUserStats(login) {
   let stats;
   if (getToken()) {
     try {
@@ -741,8 +731,37 @@ async function fetchUserStats(username) {
   return stats;
 }
 
+/**
+ * @param {string} username
+ * @returns {Promise<object>}
+ */
+async function fetchUserStats(username) {
+  const login = String(username || "")
+    .trim()
+    .replace(/^@/, "");
+  if (!/^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,38}$/.test(login)) {
+    const err = new Error("Invalid GitHub username");
+    err.status = 400;
+    throw err;
+  }
+
+  const key = `stats:${login.toLowerCase()}`;
+  const cached = cacheGet(key);
+  if (cached) return { ...cached, cached: true };
+
+  const pending = inFlight.get(key);
+  if (pending) return pending;
+
+  const work = loadUserStats(login).finally(() => {
+    inFlight.delete(key);
+  });
+  inFlight.set(key, work);
+  return work;
+}
+
 function clearCache() {
   cache.clear();
+  inFlight.clear();
 }
 
 function isTokenActive() {
