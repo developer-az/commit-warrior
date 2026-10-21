@@ -68,4 +68,5 @@ SVG responses use `Content-Type: image/svg+xml` and `Cache-Control: public, max-
 - Hero shows a GitHub-style contribution heatmap (last 26 weeks). It renders the searched user's real calendar after load; before any search it plays a snake animation. `/api/json` must include `calendar` for this.
 - After lookup: rank, six-metric KPI deck, signal pillars, recent cadence, work-pattern charts, career totals, README cards
 - Charts are inline SVG (area, bars, donut, gauge) with no chart library
+- Preloader waits for fonts + `load`, then swipes down (transform only). Content is fully laid out behind it; keep new UI free of layout-shifting intro animations and reserve image aspect ratios.
 - Short labels only. No essays under metrics.

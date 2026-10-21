@@ -132,21 +132,6 @@
     return `${prefix}-${gradientSeq}`;
   }
 
-  function animateNumber(el) {
-    const target = Number(el.dataset.count);
-    if (!Number.isFinite(target)) return;
-    const suffix = el.dataset.suffix || "";
-    const start = performance.now();
-    const duration = 900;
-    const step = (now) => {
-      const t = Math.min(1, (now - start) / duration);
-      const eased = 1 - Math.pow(1 - t, 3);
-      el.textContent = `${formatNum(Math.round(target * eased))}${suffix}`;
-      if (t < 1) requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
-  }
-
   function weeksLayout(days, weeks = 26) {
     const now = new Date();
     const today = new Date(
@@ -371,7 +356,6 @@
         label: "All-time commits",
         icon: "commit",
         value: formatNum(stats.totalCommits),
-        count: stats.totalCommits,
         sub:
           stats.commitsSource === "graphql"
             ? "GraphQL contribution history"
@@ -382,7 +366,6 @@
         label: "This year",
         icon: "calendar",
         value: formatNum(stats.yearContributions),
-        count: stats.yearContributions,
         sub: stats.calendarSource
           ? `calendar · ${stats.calendarSource}`
           : "contribution calendar",
@@ -392,8 +375,6 @@
         label: "Current streak",
         icon: "flame",
         value: `${formatNum(streak.currentStreak)}d`,
-        count: streak.currentStreak,
-        suffix: "d",
         sub: `longest ${formatNum(streak.longestStreak)}d`,
         accent: "#d29922",
       },
@@ -401,7 +382,6 @@
         label: "Stars owned",
         icon: "star",
         value: formatNum(stats.totalStars),
-        count: stats.totalStars,
         sub: `${formatNum(stats.publicRepos)} public repos`,
         accent: "#db61a2",
       },
@@ -409,7 +389,6 @@
         label: "Code reviews",
         icon: "review",
         value: formatNum(stats.totalReviews),
-        count: stats.totalReviews,
         sub: `${formatNum(stats.contributedTo)} external repos`,
         accent: "#39c5cf",
       },
@@ -417,21 +396,13 @@
 
     host.innerHTML = vitals
       .map(
-        (k, i) => `<article class="kpi" style="--accent:${k.accent};--d:${i * 55}ms">
+        (k) => `<article class="kpi" style="--accent:${k.accent}">
           <span class="kpi-label">${icon(k.icon)}${escapeHtml(k.label)}</span>
-          <strong class="kpi-value"${
-            Number.isFinite(k.count)
-              ? ` data-count="${Number(k.count)}" data-suffix="${k.suffix || ""}"`
-              : ""
-          }>${escapeHtml(k.value)}</strong>
+          <strong class="kpi-value">${escapeHtml(k.value)}</strong>
           <span class="kpi-sub">${escapeHtml(k.sub)}</span>
         </article>`
       )
       .join("");
-
-    host
-      .querySelectorAll(".kpi-value[data-count]")
-      .forEach((el) => animateNumber(el));
   }
 
   function renderSignals(stats) {
@@ -1094,6 +1065,62 @@
     }
   });
 
+  function dismissPreloader() {
+    const preloader = document.getElementById("preloader");
+    if (!preloader) return;
+
+    const cleanup = () => {
+      if (preloader.parentNode) preloader.remove();
+      document.documentElement.classList.remove("is-loading");
+    };
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      cleanup();
+      return;
+    }
+
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      preloader.removeEventListener("transitionend", onEnd);
+      cleanup();
+    };
+    const onEnd = (event) => {
+      if (event.target !== preloader || event.propertyName !== "transform") {
+        return;
+      }
+      finish();
+    };
+    preloader.addEventListener("transitionend", onEnd);
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => preloader.classList.add("is-done"));
+    });
+    setTimeout(finish, 1400);
+  }
+
+  function revealPage() {
+    if (!document.getElementById("preloader")) return;
+
+    const minimum = new Promise((resolve) => setTimeout(resolve, 450));
+    const fontsReady = document.fonts
+      ? document.fonts.ready
+      : Promise.resolve();
+    const pageReady = new Promise((resolve) => {
+      if (document.readyState === "complete") resolve();
+      else window.addEventListener("load", resolve, { once: true });
+    });
+    const cap = new Promise((resolve) => setTimeout(resolve, 2600));
+
+    Promise.all([
+      minimum,
+      Promise.race([Promise.all([fontsReady, pageReady]), cap]),
+    ])
+      .catch(() => {})
+      .then(dismissPreloader);
+  }
+
   renderContributionPreview();
 
   const params = new URLSearchParams(window.location.search);
@@ -1102,5 +1129,7 @@
     usernameInput.value = preset;
     loadUser(preset, { scroll: false });
   }
+
+  revealPage();
 })();
 
