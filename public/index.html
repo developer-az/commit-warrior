@@ -5,60 +5,96 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Commit Warrior — Engineering Activity Profile</title>
   <meta name="description" content="Public GitHub activity summarized for hiring review: delivery, collaboration, consistency, and stack. Optional README embeds." />
+  <meta name="theme-color" content="#0d1117" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/styles.css" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 </head>
 <body>
-  <div class="atmosphere" aria-hidden="true"></div>
-
   <header class="topbar">
     <a class="brand-mark" href="/" aria-label="Commit Warrior home">
-      <span class="brand-glyph" aria-hidden="true"></span>
+      <span class="brand-glyph" aria-hidden="true">
+        <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+          <circle cx="8" cy="8" r="3" />
+          <path d="M1.5 8h3.5M11 8h3.5" />
+        </svg>
+      </span>
       <span class="brand-text">Commit Warrior</span>
     </a>
     <nav class="topnav">
-      <a href="https://github.com/developer-az/commit-warrior" target="_blank" rel="noopener">Source</a>
+      <a class="gh-link" href="https://github.com/developer-az/commit-warrior" target="_blank" rel="noopener">
+        <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" fill="currentColor">
+          <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
+        </svg>
+        <span>GitHub</span>
+      </a>
     </nav>
   </header>
 
   <main>
     <section class="hero" id="lookup">
-      <p class="eyebrow">Public GitHub activity</p>
-      <h1>Engineering profile from commit history</h1>
-      <p class="lede">Summarizes shipping, review work, cadence, and language mix from a username. Data is sourced from GitHub’s public API and contribution calendar.</p>
-      <form class="hero-form" id="lookup-form" autocomplete="off">
-        <label class="sr-only" for="username">GitHub username</label>
-        <div class="input-shell">
-          <span class="input-prefix" aria-hidden="true">github.com/</span>
-          <input
-            id="username"
-            name="username"
-            type="text"
-            placeholder="username"
-            spellcheck="false"
-            maxlength="39"
-            required
-          />
+      <div class="hero-copy">
+        <p class="eyebrow">Public GitHub activity</p>
+        <h1>Engineering profile from commit history</h1>
+        <p class="lede">Delivery, collaboration, cadence, and stack from a public GitHub username.</p>
+        <form class="hero-form" id="lookup-form" autocomplete="off">
+          <label class="sr-only" for="username">GitHub username</label>
+          <div class="input-shell">
+            <svg class="input-icon" viewBox="0 0 16 16" width="15" height="15" aria-hidden="true" fill="currentColor">
+              <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
+            </svg>
+            <span class="input-prefix" aria-hidden="true">github.com/</span>
+            <input
+              id="username"
+              name="username"
+              type="text"
+              placeholder="username"
+              spellcheck="false"
+              maxlength="39"
+              required
+            />
+          </div>
+          <button type="submit" id="generate-btn"><span>Load profile</span></button>
+        </form>
+        <p class="hero-hint" id="status-line" role="status" aria-live="polite">Public repositories and profiles only.</p>
+      </div>
+
+      <figure class="contrib-card" aria-hidden="true">
+        <figcaption class="contrib-head">
+          <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
+          </svg>
+          <span>Contribution activity</span>
+          <span class="contrib-range">Last 26 weeks</span>
+        </figcaption>
+        <div class="contrib-months" id="contrib-months"></div>
+        <div class="contrib-grid" id="contrib-grid"></div>
+        <div class="contrib-foot">
+          <span class="contrib-meta" id="contrib-meta">No profile loaded</span>
+          <span class="contrib-legend">
+            <span>Less</span>
+            <i class="l0"></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i>
+            <span>More</span>
+          </span>
         </div>
-        <button type="submit" id="generate-btn">
-          <span>Load profile</span>
-        </button>
-      </form>
-      <p class="hero-hint" id="status-line">Public repositories and profiles only.</p>
+      </figure>
     </section>
 
     <section class="report" id="generator" hidden>
-      <header class="profile-strip">
-        <img id="avatar" alt="" width="52" height="52" />
+      <header class="profile-card">
+        <img id="avatar" alt="" width="56" height="56" />
         <div class="profile-copy">
           <p class="profile-name" id="profile-name"></p>
           <a class="profile-link" id="profile-link" target="_blank" rel="noopener"></a>
           <p class="profile-meta" id="profile-meta"></p>
         </div>
-        <div class="meta-right">
+        <div class="profile-side">
+          <div class="rank-badge" id="rank-badge" hidden>
+            <span class="rank-letter" id="rank-letter">—</span>
+            <span class="rank-caption">rank</span>
+          </div>
           <span class="freshness">
             <span class="live-dot" aria-hidden="true"></span>
             <span id="live-label">Live</span>
@@ -66,6 +102,8 @@
           </span>
         </div>
       </header>
+
+      <section class="kpi-grid" id="kpi-grid" aria-label="Key metrics"></section>
 
       <section class="signals" id="signals" aria-label="Activity signals"></section>
 
@@ -101,6 +139,10 @@
             <figcaption>Pull request throughput</figcaption>
             <div id="funnel-chart" class="viz-host"></div>
           </figure>
+          <figure class="viz-block">
+            <figcaption>Consistency</figcaption>
+            <div id="consistency-gauge" class="viz-host"></div>
+          </figure>
           <figure class="viz-block span-wide">
             <figcaption>Last 12 weeks</figcaption>
             <div id="weekly-chart" class="viz-host"></div>
@@ -122,11 +164,12 @@
         <div class="ledger-groups" id="ledger"></div>
       </section>
 
+
       <section class="panel embed-panel">
         <div class="panel-head">
           <div>
             <h2>README embeds</h2>
-            <p class="panel-sub">Optional SVG cards for a profile README — not required for review</p>
+            <p class="panel-sub">Optional SVG cards for a profile README</p>
           </div>
           <div class="controls">
             <label>
@@ -198,8 +241,15 @@
 
   <footer class="footer">
     <p>Metrics from public GitHub data. Cached ~30 minutes.</p>
+    <a class="gh-link" href="https://github.com/developer-az/commit-warrior" target="_blank" rel="noopener">
+      <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" fill="currentColor">
+        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
+      </svg>
+      <span>GitHub</span>
+    </a>
   </footer>
 
   <script src="/app.js"></script>
 </body>
 </html>
+

@@ -6,7 +6,7 @@
 
 ### 1. Activity profile (website)
 
-Run the app, enter a public GitHub username, and read a structured summary: signal pillars, recent cadence, work patterns, and grouped career totals.
+Run the app, enter a public GitHub username, and read a dashboard: rank and key metrics, signal pillars, recent cadence, work-pattern charts (language mix, weekday rhythm, PR throughput, consistency, weekly/monthly trends), and career totals.
 
 ```bash
 npm install
@@ -57,7 +57,7 @@ Replace `YOUR_HOST` with your deployment URL (or `http://localhost:3000` while t
 | `GET /api/graph?username=` | Contribution heatmap SVG |
 | `GET /api/activity?username=` | Weekly activity trend SVG |
 | `GET /api/milestones?username=` | Milestone badge strip SVG |
-| `GET /api/json?username=` | JSON used by the website (includes viz aggregates) |
+| `GET /api/json?username=` | JSON used by the website (includes calendar + viz aggregates) |
 | `GET /api/health` | Health + whether a token is configured |
 
 ### Query options

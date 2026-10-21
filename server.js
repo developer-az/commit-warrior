@@ -190,10 +190,11 @@ app.get("/api/json", async (req, res) => {
   }
   try {
     const stats = await fetchUserStats(username);
-    const { calendar, ...rest } = stats;
+    const { calendar = [], ...rest } = stats;
     res.set("Cache-Control", "public, max-age=120");
     res.json({
       ...rest,
+      calendar,
       servedAt: new Date().toISOString(),
       hasCalendar: Array.isArray(calendar) && calendar.length > 0,
     });

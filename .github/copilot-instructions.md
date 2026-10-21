@@ -61,7 +61,11 @@ SVG responses use `Content-Type: image/svg+xml` and `Cache-Control: public, max-
 5. With `GITHUB_TOKEN`, confirm `source: "graphql"` in `/api/json` and non-zero commit totals for active users
 
 ## Design notes for the website
-- Brand-first hero (“Commit Warrior”), Fraunces + IBM Plex Sans, brass on navy
-- First viewport: brand, one line of purpose, username field
-- After lookup: today vs yesterday, a few highlights, totals, README cards
+- GitHub-flavored dark theme: `#0d1117` / `#161b22` surfaces, `#30363d` borders, green (`#3fb950`) and blue (`#58a6ff`) accents
+- IBM Plex Sans + IBM Plex Mono; flat panels, 6px radii, no gradients or decorative orbs
+- Top-bar commit glyph brand + GitHub mark and “GitHub” link to the repo (no “Source” label)
+- Plain copy throughout: no marketing or “AI” phrasing
+- Hero shows a GitHub-style contribution heatmap (last 26 weeks). It renders the searched user's real calendar after load; before any search it plays a snake animation. `/api/json` must include `calendar` for this.
+- After lookup: rank, six-metric KPI deck, signal pillars, recent cadence, work-pattern charts, career totals, README cards
+- Charts are inline SVG (area, bars, donut, gauge) with no chart library
 - Short labels only. No essays under metrics.
