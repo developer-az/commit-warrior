@@ -14,6 +14,7 @@
 
   let currentUser = "";
   let gradientSeq = 0;
+  let publicBase = window.location.origin;
 
   const C = {
     blue: "#58a6ff",
@@ -24,7 +25,7 @@
   };
 
   function originBase() {
-    return window.location.origin;
+    return publicBase;
   }
 
   function qs(params) {
@@ -925,7 +926,7 @@
   }
 
 
-  function updatePreview(username) {
+  async function updatePreview(username) {
     const bust = Date.now();
     const urls = {
       stats: statsUrl(username),
@@ -934,12 +935,36 @@
       graph: graphUrl(username),
       activity: activityUrl(username),
     };
+    const options = {
+      ...themeParams(),
+      show_icons: String(showIcons.checked),
+      layout: compactLangs.checked ? "compact" : "normal",
+    };
+    if (hideRank.checked) options.hide_rank = "true";
+    const kinds = {
+      stats: "stats",
+      langs: "langs",
+      streak: "streak",
+      graph: "graph",
+      activity: "activity",
+    };
 
-    document.getElementById("stats-card").src = `${urls.stats}&_=${bust}`;
-    document.getElementById("langs-card").src = `${urls.langs}&_=${bust}`;
-    document.getElementById("streak-card").src = `${urls.streak}&_=${bust}`;
-    document.getElementById("graph-card").src = `${urls.graph}&_=${bust}`;
-    document.getElementById("activity-card").src = `${urls.activity}&_=${bust}`;
+    await Promise.all(
+      Object.entries(urls).map(async ([key, url]) => {
+        const img = document.getElementById(`${key}-card`);
+        if (!img) return;
+        try {
+          const dataUrl = await window.__CW_BRIDGE__.cardSrc(
+            kinds[key],
+            username,
+            options
+          );
+          img.src = dataUrl || `${url}&_=${bust}`;
+        } catch {
+          img.src = `${url}&_=${bust}`;
+        }
+      })
+    );
 
     const selected = new Set(selectedCards());
     document.querySelectorAll("[data-preview]").forEach((el) => {
@@ -975,9 +1000,7 @@
     setStatus("Fetching public GitHub data…", "");
 
     try {
-      const res = await fetch(`/api/json?username=${encodeURIComponent(clean)}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Request failed");
+      const data = await window.__CW_BRIDGE__.getJson(clean);
 
       currentUser = data.login;
       const avatar = document.getElementById("avatar");
@@ -1103,25 +1126,26 @@
   function revealPage() {
     if (!document.getElementById("preloader")) return;
 
-    const minimum = new Promise((resolve) => setTimeout(resolve, 450));
-    const fontsReady = document.fonts
-      ? document.fonts.ready
-      : Promise.resolve();
-    const pageReady = new Promise((resolve) => {
-      if (document.readyState === "complete") resolve();
-      else window.addEventListener("load", resolve, { once: true });
-    });
-    const cap = new Promise((resolve) => setTimeout(resolve, 2600));
+    // Reveal once the DOM is parsed and fonts have settled. Do NOT wait on
+    // window.load: it blocks on every <img>, including the cache-busted SVG
+    // cards, which makes a cold visit look broken until the data arrives.
+    // Fonts already use display=swap, so a short cap is enough.
+    const fontsReady = document.fonts ? document.fonts.ready : Promise.resolve();
+    const cap = new Promise((resolve) => setTimeout(resolve, 700));
 
-    Promise.all([
-      minimum,
-      Promise.race([Promise.all([fontsReady, pageReady]), cap]),
-    ])
+    Promise.race([fontsReady, cap])
       .catch(() => {})
       .then(dismissPreloader);
   }
 
   renderContributionPreview();
+
+  window.__CW_BRIDGE__.publicBase()
+    .then((base) => {
+      publicBase = base;
+      if (currentUser) updatePreview(currentUser);
+    })
+    .catch(() => {});
 
   const params = new URLSearchParams(window.location.search);
   const preset = params.get("username");

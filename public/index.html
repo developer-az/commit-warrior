@@ -17,6 +17,15 @@
       html.is-loading body { overflow: auto !important; }
     </style>
   </noscript>
+  <script>
+    // Failsafe: never leave the page stuck behind the preloader if app.js
+    // fails to load or throws before revealPage() runs.
+    setTimeout(function () {
+      var p = document.getElementById("preloader");
+      if (p && p.parentNode) p.parentNode.removeChild(p);
+      document.documentElement.classList.remove("is-loading");
+    }, 2500);
+  </script>
 </head>
 <body>
   <div class="preloader" id="preloader" aria-hidden="true">
@@ -268,6 +277,7 @@
     </a>
   </footer>
 
+  <script src="/bridge.js"></script>
   <script src="/app.js"></script>
 </body>
 </html>

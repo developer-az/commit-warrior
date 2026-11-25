@@ -116,6 +116,17 @@ npm test           # node:test unit tests
 npm run dev        # restart on file changes (Node 18+)
 ```
 
+## Desktop app (Rust + Tauri)
+
+A native Windows build lives in [`src-tauri/`](src-tauri/README.md). It reuses this site's
+frontend but runs a Rust backend (GitHub fetch, cache, SVG cards) behind Tauri IPC, so the
+`.exe` is self-contained and shares one UI with the web app.
+
+```bash
+npm run desktop:dev     # development window
+npm run desktop:build   # NSIS installer + unpacked exe
+```
+
 ## Privacy
 
 - The website only needs a public GitHub username.

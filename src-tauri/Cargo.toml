@@ -1,0 +1,31 @@
+[package]
+name = "commit-warrior"
+version = "2.0.0"
+description = "Commit Warrior desktop app — engineering activity profiles from public GitHub data"
+authors = ["Anthony Zhou"]
+license = "ISC"
+edition = "2021"
+rust-version = "1.77.2"
+repository = "https://github.com/developer-az/commit-warrior"
+
+[lib]
+name = "commit_warrior_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+reqwest = { version = "0.12", features = ["json", "rustls-tls"] }
+tokio = { version = "1", features = ["full"] }
+chrono = { version = "0.4", features = ["serde"] }
+regex = "1"
+
+[profile.release]
+opt-level = 2
+lto = true
+codegen-units = 1
+strip = true

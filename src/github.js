@@ -10,6 +10,7 @@ const cache = new Map();
 /** @type {Map<string, Promise<object>>} */
 const inFlight = new Map();
 const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+const STALE_TTL_MS = 24 * 60 * 60 * 1000; // keep last good snapshot for a day
 
 /** When a configured token returns 401, stop attaching it and use public REST. */
 let tokenRevoked = false;
@@ -111,8 +112,24 @@ function cacheGet(key) {
   return hit.value;
 }
 
+/** Last good snapshot, even when past the fresh TTL (stale-while-revalidate). */
+function cacheGetStale(key) {
+  const hit = cache.get(key);
+  if (!hit) return null;
+  if (Date.now() > hit.staleUntil) {
+    cache.delete(key);
+    return null;
+  }
+  return hit.value;
+}
+
 function cacheSet(key, value) {
-  cache.set(key, { value, expires: Date.now() + CACHE_TTL_MS });
+  const now = Date.now();
+  cache.set(key, {
+    value,
+    expires: now + CACHE_TTL_MS,
+    staleUntil: now + STALE_TTL_MS,
+  });
 }
 
 /**
@@ -748,6 +765,20 @@ async function fetchUserStats(username) {
   const key = `stats:${login.toLowerCase()}`;
   const cached = cacheGet(key);
   if (cached) return { ...cached, cached: true };
+
+  // Stale-while-revalidate: a returning visitor (or a README image request)
+  // gets the last good card immediately instead of a blank/rate-limit error.
+  const stale = cacheGetStale(key);
+  if (stale) {
+    if (!inFlight.has(key)) {
+      const refresh = loadUserStats(login)
+        .then((fresh) => cacheSet(key, fresh))
+        .catch(() => {})
+        .finally(() => inFlight.delete(key));
+      inFlight.set(key, refresh);
+    }
+    return { ...stale, cached: true, stale: true };
+  }
 
   const pending = inFlight.get(key);
   if (pending) return pending;

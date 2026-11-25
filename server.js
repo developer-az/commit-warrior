@@ -229,6 +229,13 @@ if (require.main === module) {
         ? "GitHub token detected — full GraphQL stats enabled."
         : "No GITHUB_TOKEN — public REST (all-time search for commits, reviews, contributed-to)."
     );
+
+    // Optional: warm the in-memory cache at boot so the first visitor of a
+    // profile doesn't pay the cold GitHub API cost. Comma-separated list.
+    for (const user of (process.env.WARM_USERS || "").split(",")) {
+      const name = user.trim();
+      if (name) fetchUserStats(name).catch(() => {});
+    }
   });
 }
 
