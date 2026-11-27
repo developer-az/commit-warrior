@@ -1,51 +1,69 @@
 # Commit Warrior
 
-**Engineering activity profiles** from public GitHub data — delivery, collaboration, cadence, and stack. The website is built for review (hiring, open-source triage); README SVG embeds are optional.
+[![Latest release](https://img.shields.io/github/v/release/developer-az/commit-warrior)](https://github.com/developer-az/commit-warrior/releases/latest)
+[![Stars](https://img.shields.io/github/stars/developer-az/commit-warrior)](https://github.com/developer-az/commit-warrior/stargazers)
+[![License: ISC](https://img.shields.io/badge/license-ISC-blue.svg)](README.md#license)
 
-## Two ways to use it
+**Engineering activity profiles from public GitHub data** — delivery, collaboration, cadence, and stack. Use the website for a review-ready dashboard, embed SVG cards in your README, or run the native Windows app with a floating widget.
 
-### 1. Activity profile (website)
+🖥️ **[Live demo](https://commit-warrior.vercel.app/?username=developer-az)** · 📦 **[Download the Windows app](https://github.com/developer-az/commit-warrior/releases/latest)** · 🔗 **[README embeds](#readme-embeds-optional)**
 
-Run the app, enter a public GitHub username, and read a dashboard: rank and key metrics, signal pillars, recent cadence, work-pattern charts (language mix, weekday rhythm, PR throughput, consistency, weekly/monthly trends), and career totals.
+## Demo
+
+![Commit Warrior dashboard and floating widget](docs/demo.gif)
+
+[Dashboard screenshot](docs/demo-dashboard.png) · [Widget screenshot](docs/demo-widget.png)
+
+The Windows app is built with **Rust + Tauri v2**. It reuses the same frontend as the website but talks to a Rust backend over IPC. A system-tray icon and an always-on-top mini window keep your rank, streak and daily activity one click away.
+
+## Quick start
+
+### Website
 
 ```bash
 npm install
-cp .env.example .env   # optional: add GITHUB_TOKEN for full stats
+cp .env.example .env   # optional: GITHUB_TOKEN for fuller stats and higher rate limits
 npm start
 # → http://localhost:3000
 ```
 
-Signals include merge rate, review volume, calendar consistency, and primary languages. Data comes from GitHub’s public API and contribution calendar (cached ~30 minutes).
+Or use the hosted version at [commit-warrior.vercel.app](https://commit-warrior.vercel.app) — no setup needed.
 
-### 2. README embeds (optional)
+### Windows app
 
-SVG endpoints for profile READMEs. Defaults on the site favor the **Professional** theme and hide rank badges.
+1. Download `Commit Warrior x64 setup.exe` from [Releases](https://github.com/developer-az/commit-warrior/releases/latest).
+2. Run the installer (Windows 10/11, WebView2 runtime).
+3. Load a profile. Click the **Widget** button or the system-tray icon to toggle the floating mini window.
 
-```md
-[![GitHub stats](https://YOUR_HOST/api/stats?username=YOUR_USERNAME&theme=professional&hide_rank=true)](https://github.com/YOUR_USERNAME)
-![Top Languages](https://YOUR_HOST/api/top-langs?username=YOUR_USERNAME&theme=professional&layout=compact)
-![Activity Graph](https://YOUR_HOST/api/activity?username=YOUR_USERNAME&theme=professional)
-```
-
-Replace `YOUR_HOST` with your deployment URL (or `http://localhost:3000` while testing).
+The widget refreshes every 60 seconds and remembers the last username you loaded.
 
 ## What the stats include
 
 | Metric | Meaning |
 | --- | --- |
 | Total Stars | Stars across owned (non-fork) repositories |
-| Total Commits | **All-time** (not week/month). With token: GraphQL contribution commits across every contribution year. Without token: GitHub commit search (`author:USER`) for indexed public commits |
-| Total PRs | Pull requests authored |
-| PRs Merged | Pull requests merged |
+| Total Commits | **All-time**. With a token: GraphQL contribution commits across every contribution year. Without: GitHub commit search (`author:USER`) for indexed public commits |
+| Total PRs / PRs Merged | Pull requests authored / merged |
 | Total Issues / Issues Closed | Issues authored / closed |
-| Code Reviews | PRs you reviewed (`reviewed-by:USER`, all-time; includes reviews on your own repos) |
-| Contributed to | Distinct repos you don’t own with public commits, authored issues/PRs, or comments |
+| Code Reviews | PRs you reviewed (`reviewed-by:USER`, all-time) |
+| Contributed to | Distinct repos you don't own with public commits, authored issues/PRs, or comments |
 | Top Languages | Language mix across owned repos |
-| Rank | Weighted score (S → C) from the metrics above |
-| Current / longest streak | Consecutive contribution days (commits, PRs, issues — GitHub’s calendar) |
-| Contribution graph | Last-year heatmap, same shape as the profile calendar |
-| Activity graph | Weekly contribution trend (smooth area chart) for the last year |
-| Milestones | Threshold badges (commits, PRs, streaks, polyglot, …) |
+| Rank | Weighted score (S → C) from commits, PRs, issues, reviews, stars and followers |
+| Current / longest streak | Consecutive contribution days from GitHub's calendar |
+| Contribution graph | Last-year heatmap |
+| Activity graph | Weekly contribution trend for the last year |
+
+Rank is `weighted / 6.5 × 100`: commits ×1, PRs ×1.5, issues ×1, reviews ×0.5, **stars ×2**, followers ×0.5. Grades follow the visible score (S ≥ 90, A+ ≥ 85, A ≥ 80, A− ≥ 75, B+ ≥ 70, B ≥ 65, B− ≥ 60, C+ ≥ 50, C below 50).
+
+## README embeds (optional)
+
+Defaults favor the **Professional** theme and hide the rank badge.
+
+```md
+[![GitHub stats](https://commit-warrior.vercel.app/api/stats?username=YOUR_USERNAME&theme=professional&hide_rank=true)](https://github.com/YOUR_USERNAME)
+![Top Languages](https://commit-warrior.vercel.app/api/top-langs?username=YOUR_USERNAME&theme=professional&layout=compact)
+![Activity Graph](https://commit-warrior.vercel.app/api/activity?username=YOUR_USERNAME&theme=professional)
+```
 
 ## API
 
@@ -57,84 +75,39 @@ Replace `YOUR_HOST` with your deployment URL (or `http://localhost:3000` while t
 | `GET /api/graph?username=` | Contribution heatmap SVG |
 | `GET /api/activity?username=` | Weekly activity trend SVG |
 | `GET /api/milestones?username=` | Milestone badge strip SVG |
-| `GET /api/json?username=` | JSON used by the website (includes calendar + viz aggregates) |
-| `GET /api/health` | Health + whether a token is configured |
+| `GET /api/json?username=` | JSON used by the website |
+| `GET /api/health` | Health + token status |
 
-### Query options
-
-**Stats** (`/api/stats`)
-
-- `username` (required)
-- `theme` — `professional` · `default` · `dark` · `light` · `tokyonight` · `radical` · `transparent`
-- `show_icons` — `true` / `false`
-- `hide_rank` — `true` / `false`
-- `hide_border` — `true` / `false`
-- `hide` — comma list: `stars,commits,prs,prs_merged,issues,issues_closed,reviews,contribs,followers`
-
-**Languages** (`/api/top-langs`)
-
-- `username` (required)
-- `theme` — same themes
-- `layout` — `normal` or `compact`
-- `langs_count` — number of languages (default 6)
-- `hide_border` — `true` / `false`
-
-**Streak / graph / activity / milestones** (`/api/streak`, `/api/graph`, `/api/activity`, `/api/milestones`)
-
-- `username` (required)
-- `theme` — same themes
-- `hide_border` — `true` / `false`
+Query options: `theme` (professional/default/dark/light/tokyonight/radical/transparent), `show_icons`, `hide_rank`, `hide_border`, `hide`, `layout`, `langs_count`.
 
 ## GitHub token (recommended)
 
-Without a token the server uses the public REST API. Commits, reviews, and contributed-to still use **all-time** GitHub search (public/indexed activity).
+Set `GITHUB_TOKEN` in `.env` (classic PAT with public repo access, or fine-grained read on public data) for GraphQL contribution commits and higher rate limits. Without it the server uses public REST; commits, reviews and contributed-to still use all-time public search.
 
-Set `GITHUB_TOKEN` in `.env` (classic PAT with public repo access, or fine-grained read on public data) for GraphQL contribution commits and higher rate limits.
-
-```bash
-GITHUB_TOKEN=ghp_...
-PORT=3000
-```
-
-## Deploy
-
-Any Node host works (`npm start`, port from `PORT`). Example with a process manager:
-
-```bash
-npm install --omit=dev
-GITHUB_TOKEN=... PORT=3000 npm start
-```
-
-Point a reverse proxy at the port and use that public origin in your README image URLs.
-
-## Development
-
-```bash
-npm install
-npm start          # http://localhost:3000
-npm test           # node:test unit tests
-npm run dev        # restart on file changes (Node 18+)
-```
+Optional `WARM_USERS=user1,user2` pre-caches profiles at startup so the first request isn't cold. Responses use stale-while-revalidate (fresh 30 min, stale up to 24 h).
 
 ## Desktop app (Rust + Tauri)
 
-A native Windows build lives in [`src-tauri/`](src-tauri/README.md). It reuses this site's
-frontend but runs a Rust backend (GitHub fetch, cache, SVG cards) behind Tauri IPC, so the
-`.exe` is self-contained and shares one UI with the web app.
+See [`src-tauri/README.md`](src-tauri/README.md) for architecture and build details.
 
 ```bash
 npm run desktop:dev     # development window
 npm run desktop:build   # NSIS installer + unpacked exe
 ```
 
-The desktop app includes a **floating widget** (always-on-top mini window) and a system tray
-icon: click the tray icon or the in-app **Widget** button to toggle it. It shows rank, score,
-current streak, today's contributions and all-time commits, and refreshes every minute.
+## Development
+
+```bash
+npm install
+npm test        # Node unit tests (30)
+npm start       # http://localhost:3000
+cd src-tauri && cargo test   # Rust unit tests (12)
+```
 
 ## Privacy
 
 - The website only needs a public GitHub username.
-- Optional server `GITHUB_TOKEN` stays on the server and is never sent to the browser.
+- An optional server `GITHUB_TOKEN` stays on the server and is never sent to the browser.
 - Responses are cached in memory (~30 minutes) to respect GitHub rate limits.
 
 ## License
