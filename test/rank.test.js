@@ -28,4 +28,22 @@ describe("calculateRank", () => {
     assert.ok(["S", "A+", "A"].includes(rank.level));
     assert.ok(rank.score > 50);
   });
+
+  it("derives the level from the visible score", () => {
+    const rank = calculateRank({
+      commits: 1100,
+      prs: 148,
+      issues: 51,
+      reviews: 36,
+      stars: 32,
+      followers: 10,
+    });
+    const bands = [
+      ["S", 90], ["A+", 85], ["A", 80], ["A-", 75],
+      ["B+", 70], ["B", 65], ["B-", 60], ["C+", 50], ["C", 0],
+    ];
+    const expected = bands.find(([, min]) => rank.score >= min)[0];
+    assert.equal(rank.level, expected);
+    assert.ok(rank.score >= 0 && rank.score <= 100);
+  });
 });

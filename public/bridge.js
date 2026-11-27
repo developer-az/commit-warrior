@@ -63,6 +63,18 @@
       }
       return invoke("open_external", { url });
     },
+
+    toggleWidget() {
+      return isTauri ? invoke("toggle_widget") : Promise.resolve();
+    },
+
+    closeWidget() {
+      if (!isTauri) {
+        window.close();
+        return Promise.resolve();
+      }
+      return invoke("close_widget");
+    },
   };
 
   if (isTauri) {

@@ -1003,6 +1003,12 @@
       const data = await window.__CW_BRIDGE__.getJson(clean);
 
       currentUser = data.login;
+      try {
+        localStorage.setItem("cw:username", data.login);
+      } catch {
+        /* storage may be unavailable; the widget still accepts a username */
+      }
+      document.getElementById("widget-btn").hidden = false;
       const avatar = document.getElementById("avatar");
       avatar.src = data.avatarUrl || "";
       avatar.alt = `${data.login} avatar`;
@@ -1034,6 +1040,7 @@
       history.replaceState(null, "", url);
     } catch (err) {
       setStatus(friendlyError(err.message), "error");
+      document.getElementById("widget-btn").hidden = true;
       generator.hidden = true;
       embed.hidden = true;
       renderContributionGrid([], "No profile loaded", false);
@@ -1056,6 +1063,10 @@
 
   cardPicks.addEventListener("change", () => {
     if (currentUser) updatePreview(currentUser);
+  });
+
+  document.getElementById("widget-btn").addEventListener("click", () => {
+    window.__CW_BRIDGE__.toggleWidget().catch(() => {});
   });
 
   function flashCopied() {

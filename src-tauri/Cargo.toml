@@ -1,6 +1,6 @@
 [package]
 name = "commit-warrior"
-version = "2.0.0"
+version = "2.1.0"
 description = "Commit Warrior desktop app — engineering activity profiles from public GitHub data"
 authors = ["Anthony Zhou"]
 license = "ISC"
@@ -16,7 +16,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = [] }
+tauri = { version = "2", features = ["tray-icon", "image-ico"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 reqwest = { version = "0.12", features = ["json", "rustls-tls"] }

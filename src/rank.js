@@ -78,25 +78,29 @@ function calculateRank(stats) {
       TOTAL_WEIGHT;
 
   const percentile = rank * 100;
+  const score = Math.round((100 - percentile) * 100) / 100;
+
+  // Grade from the score the user sees, not from the internal percentile.
+  // Previously the bands were defined on percentile (lower = better), which
+  // made "A-" show up next to a 72/100 score.
   const LEVELS = [
-    { level: "S", threshold: 1 },
-    { level: "A+", threshold: 12.5 },
-    { level: "A", threshold: 25 },
-    { level: "A-", threshold: 37.5 },
-    { level: "B+", threshold: 50 },
-    { level: "B", threshold: 62.5 },
-    { level: "B-", threshold: 75 },
-    { level: "C+", threshold: 87.5 },
-    { level: "C", threshold: 100 },
+    { level: "S", min: 90 },
+    { level: "A+", min: 85 },
+    { level: "A", min: 80 },
+    { level: "A-", min: 75 },
+    { level: "B+", min: 70 },
+    { level: "B", min: 65 },
+    { level: "B-", min: 60 },
+    { level: "C+", min: 50 },
+    { level: "C", min: 0 },
   ];
 
-  const level =
-    LEVELS.find((l) => percentile <= l.threshold)?.level ?? "C";
+  const level = LEVELS.find((l) => score >= l.min)?.level ?? "C";
 
   return {
     level,
     percentile: Math.round(percentile * 100) / 100,
-    score: Math.round((100 - percentile) * 100) / 100,
+    score,
   };
 }
 

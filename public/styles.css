@@ -206,6 +206,23 @@ main,
   flex: none;
 }
 
+.widget-button {
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.widget-button:hover {
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+
+.widget-button[hidden] {
+  display: none;
+}
+
 /* Hero */
 .hero {
   display: grid;

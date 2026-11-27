@@ -127,6 +127,10 @@ npm run desktop:dev     # development window
 npm run desktop:build   # NSIS installer + unpacked exe
 ```
 
+The desktop app includes a **floating widget** (always-on-top mini window) and a system tray
+icon: click the tray icon or the in-app **Widget** button to toggle it. It shows rank, score,
+current streak, today's contributions and all-time commits, and refreshes every minute.
+
 ## Privacy
 
 - The website only needs a public GitHub username.

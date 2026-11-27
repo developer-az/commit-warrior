@@ -10,8 +10,16 @@ implementation of the GitHub stats API, exposed to the webview as Tauri commands
   detects Tauri and calls Rust commands instead of `fetch('/api/...')`.
 - **Real Rust backend** — `github.rs` (HTTP + cache + calendar parsing), `signals.rs`
   (rank/streak/insights), and `cards.rs` (SVG cards) are ports of the Node modules.
-- **Scales to widgets** — the command layer is the seam a tray app or desktop widget can
-  talk to later; the cache and data model live in Rust, not in the webview.
+- **Scales to widgets** — the command layer is the seam extra surfaces talk to; the cache
+  and data model live in Rust, not in the webview.
+
+## Floating widget
+
+A frameless, always-on-top mini window (`public/widget.html`) shows rank, score, current
+streak, today's contributions and all-time commits. Toggle it from the system tray (left
+click or the "Toggle widget" menu item) or from the **Widget** button in the main app.
+It reads the last loaded username from local storage, accepts a new one, and refreshes
+every 60 seconds.
 
 ## Build
 

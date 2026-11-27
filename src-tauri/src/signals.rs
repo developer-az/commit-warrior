@@ -548,27 +548,30 @@ pub fn calculate_rank(stats: &Value) -> Value {
 
     let weighted = commits + 1.5 * prs + issues + 0.5 * reviews + 2.0 * stars + 0.5 * followers;
     let percentile = (1.0 - weighted / 6.5) * 100.0;
+    let score = ((100.0 - percentile) * 100.0).round() / 100.0;
+
+    // Grade from the score the user sees, not from the internal percentile.
     let levels = [
-        ("S", 1.0),
-        ("A+", 12.5),
-        ("A", 25.0),
-        ("A-", 37.5),
-        ("B+", 50.0),
-        ("B", 62.5),
-        ("B-", 75.0),
-        ("C+", 87.5),
-        ("C", 100.0),
+        ("S", 90.0),
+        ("A+", 85.0),
+        ("A", 80.0),
+        ("A-", 75.0),
+        ("B+", 70.0),
+        ("B", 65.0),
+        ("B-", 60.0),
+        ("C+", 50.0),
+        ("C", 0.0),
     ];
     let level = levels
         .iter()
-        .find(|(_, threshold)| percentile <= *threshold)
+        .find(|(_, min)| score >= *min)
         .map(|(level, _)| *level)
         .unwrap_or("C");
 
     json!({
         "level": level,
         "percentile": (percentile * 100.0).round() / 100.0,
-        "score": ((100.0 - percentile) * 100.0).round() / 100.0,
+        "score": score,
     })
 }
 
@@ -610,6 +613,30 @@ mod tests {
         let rank = calculate_rank(&json!({}));
         assert_eq!(rank["level"], "C");
         assert_eq!(rank["score"], 0.0);
+    }
+
+    #[test]
+    fn rank_level_tracks_visible_score() {
+        let rank = calculate_rank(&json!({
+            "totalCommits": 1100,
+            "totalPRs": 148,
+            "totalIssues": 51,
+            "totalReviews": 36,
+            "totalStars": 32,
+            "followers": 10,
+        }));
+        let score = rank["score"].as_f64().unwrap();
+        let bands = [
+            ("S", 90.0), ("A+", 85.0), ("A", 80.0), ("A-", 75.0),
+            ("B+", 70.0), ("B", 65.0), ("B-", 60.0), ("C+", 50.0), ("C", 0.0),
+        ];
+        let expected = bands
+            .iter()
+            .find(|(_, min)| score >= *min)
+            .map(|(level, _)| *level)
+            .unwrap();
+        assert_eq!(rank["level"], expected);
+        assert!((0.0..=100.0).contains(&score));
     }
 
     #[test]

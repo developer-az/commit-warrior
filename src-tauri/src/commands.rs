@@ -1,6 +1,7 @@
-use crate::{cards, github};
+use crate::{cards, github, toggle_widget_window};
 use chrono::Utc;
 use serde_json::{json, Value};
+use tauri::Manager;
 
 #[tauri::command]
 pub async fn api_json(username: String) -> Result<Value, String> {
@@ -45,6 +46,19 @@ pub async fn api_svg(
 pub fn public_base_url() -> String {
     std::env::var("PUBLIC_BASE_URL")
         .unwrap_or_else(|_| "https://commit-warrior.vercel.app".to_string())
+}
+
+#[tauri::command]
+pub fn toggle_widget(app: tauri::AppHandle) -> Result<(), String> {
+    toggle_widget_window(&app).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn close_widget(app: tauri::AppHandle) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window("widget") {
+        window.hide().map_err(|e| e.to_string())?;
+    }
+    Ok(())
 }
 
 #[tauri::command]

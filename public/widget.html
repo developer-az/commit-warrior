@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Commit Warrior Widget</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0d1117;
+      --surface: #161b22;
+      --line: #30363d;
+      --ink: #e6edf3;
+      --muted: #8b949e;
+      --accent: #58a6ff;
+      --green: #3fb950;
+      --radius: 6px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Segoe UI", Ubuntu, sans-serif;
+      font-size: 13px;
+      overflow: hidden;
+    }
+    .shell {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+    }
+    .head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      user-select: none;
+      cursor: grab;
+    }
+    .glyph {
+      width: 22px; height: 22px;
+      display: grid; place-items: center;
+      border-radius: 5px;
+      background: var(--surface);
+      color: var(--green);
+      font-weight: 700;
+    }
+    .title { font-weight: 600; letter-spacing: -0.01em; }
+    .close {
+      margin-left: auto;
+      width: 24px; height: 24px;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      background: var(--surface);
+      color: var(--muted);
+      cursor: pointer;
+      line-height: 1;
+    }
+    .close:hover { color: var(--ink); }
+    .form { display: flex; gap: 6px; }
+    .form input {
+      flex: 1;
+      min-width: 0;
+      padding: 6px 8px;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      background: var(--surface);
+      color: var(--ink);
+      font: inherit;
+    }
+    .form button {
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      background: var(--surface);
+      color: var(--ink);
+      cursor: pointer;
+    }
+    .rank {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+    .rank strong {
+      font-size: 30px;
+      line-height: 1;
+      color: var(--accent);
+    }
+    .rank span { color: var(--muted); }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .cell {
+      padding: 6px;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      background: var(--surface);
+    }
+    .cell span { display: block; color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .cell strong { display: block; margin-top: 2px; font-size: 15px; font-variant-numeric: tabular-nums; }
+    .status { margin: 0; color: var(--muted); font-size: 11px; }
+    .status.error { color: #f85149; }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="head" data-tauri-drag-region>
+      <span class="glyph">CW</span>
+      <span class="title">Commit Warrior</span>
+      <button type="button" class="close" id="close-widget" aria-label="Hide widget">×</button>
+    </header>
+
+    <form class="form" id="widget-form">
+      <input id="widget-user" type="text" placeholder="GitHub username" maxlength="39" spellcheck="false" />
+      <button type="submit">Load</button>
+    </form>
+
+    <div class="rank">
+      <strong id="widget-level">—</strong>
+      <span id="widget-score">— / 100</span>
+    </div>
+
+    <div class="grid">
+      <div class="cell"><span>Streak</span><strong id="widget-streak">—</strong></div>
+      <div class="cell"><span>Today</span><strong id="widget-today">—</strong></div>
+      <div class="cell"><span>Commits</span><strong id="widget-commits">—</strong></div>
+    </div>
+
+    <p class="status" id="widget-status">Enter a GitHub username.</p>
+  </main>
+
+  <script src="/bridge.js"></script>
+  <script src="/widget.js"></script>
+</body>
+</html>
