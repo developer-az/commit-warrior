@@ -13,7 +13,6 @@
   const cardPicks = document.getElementById("card-picks");
 
   let currentUser = "";
-  let gradientSeq = 0;
   let publicBase = window.location.origin;
 
   const C = {
@@ -126,11 +125,6 @@
     return [...cardPicks.querySelectorAll("input[data-card]")]
       .filter((el) => el.checked)
       .map((el) => el.dataset.card);
-  }
-
-  function nextGradient(prefix) {
-    gradientSeq += 1;
-    return `${prefix}-${gradientSeq}`;
   }
 
   function weeksLayout(days, weeks = 26) {
@@ -291,24 +285,6 @@
     renderContributionGrid([], "No profile loaded", false);
   }
 
-  const ICONS = {
-    shield:
-      '<path d="M12 3 19 6v5.2c0 4.4-2.9 7.5-7 9.3-4.1-1.8-7-4.9-7-9.3V6l7-3Z"/><path d="m9 12 2 2 4-4"/>',
-    commit:
-      '<circle cx="12" cy="12" r="3.5"/><path d="M3 12h5.5M15.5 12H21"/>',
-    calendar:
-      '<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/>',
-    flame:
-      '<path d="M12 3c3 3.4 5.5 5.7 5.5 9a5.5 5.5 0 0 1-11 0c0-1.6.6-2.9 1.8-4.2.3 1.3 1 2 2 2.4C10.6 8 11 5.4 12 3Z"/>',
-    star:
-      '<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1L3.2 9.5l6.1-.9L12 3Z"/>',
-    review:
-      '<path d="M4 5h16v11H9l-5 4V5Z"/><path d="m9 10 2 2 4-4"/>',
-  };
-
-  function icon(name) {
-    return `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ""}</svg>`;
-  }
 
   function renderProfileMeta(stats) {
     const parts = [];
@@ -348,57 +324,45 @@
     const vitals = [
       {
         label: "Rank",
-        icon: "shield",
         value: rank.level || "—",
         sub: rank.score != null ? `${rank.score} / 100` : "rank score",
-        accent: "#a371f7",
       },
       {
         label: "All-time commits",
-        icon: "commit",
         value: formatNum(stats.totalCommits),
         sub:
           stats.commitsSource === "graphql"
             ? "GraphQL contribution history"
             : "public search index",
-        accent: "#58a6ff",
       },
       {
         label: "This year",
-        icon: "calendar",
         value: formatNum(stats.yearContributions),
         sub: stats.calendarSource
           ? `calendar · ${stats.calendarSource}`
           : "contribution calendar",
-        accent: "#3fb950",
       },
       {
         label: "Current streak",
-        icon: "flame",
         value: `${formatNum(streak.currentStreak)}d`,
         sub: `longest ${formatNum(streak.longestStreak)}d`,
-        accent: "#d29922",
       },
       {
         label: "Stars owned",
-        icon: "star",
         value: formatNum(stats.totalStars),
         sub: `${formatNum(stats.publicRepos)} public repos`,
-        accent: "#db61a2",
       },
       {
         label: "Code reviews",
-        icon: "review",
         value: formatNum(stats.totalReviews),
         sub: `${formatNum(stats.contributedTo)} external repos`,
-        accent: "#39c5cf",
       },
     ];
 
     host.innerHTML = vitals
       .map(
-        (k) => `<article class="kpi" style="--accent:${k.accent}">
-          <span class="kpi-label">${icon(k.icon)}${escapeHtml(k.label)}</span>
+        (k) => `<article class="kpi">
+          <span class="kpi-label">${escapeHtml(k.label)}</span>
           <strong class="kpi-value">${escapeHtml(k.value)}</strong>
           <span class="kpi-sub">${escapeHtml(k.sub)}</span>
         </article>`
@@ -425,24 +389,6 @@
   }
 
 
-  function smoothPath(points) {
-    if (!points.length) return "";
-    if (points.length === 1) return `M${points[0].x},${points[0].y}`;
-    let d = `M${points[0].x},${points[0].y}`;
-    for (let i = 0; i < points.length - 1; i += 1) {
-      const p0 = points[i - 1] || points[i];
-      const p1 = points[i];
-      const p2 = points[i + 1];
-      const p3 = points[i + 2] || p2;
-      const cp1x = p1.x + (p2.x - p0.x) / 6;
-      const cp1y = p1.y + (p2.y - p0.y) / 6;
-      const cp2x = p2.x - (p3.x - p1.x) / 6;
-      const cp2y = p2.y - (p3.y - p1.y) / 6;
-      d += ` C${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;
-    }
-    return d;
-  }
-
   function areaChart({ series, width = 720, height = 110, aria = "Trend" }) {
     const rows = (series || []).map((d) => ({
       label: d.label ?? d.key ?? "",
@@ -461,8 +407,11 @@
       y: pad.t + innerH - (d.count / max) * innerH,
       d,
     }));
-    const id = nextGradient("area");
-    const line = smoothPath(points);
+    // One series, straight segments, one hue. No smoothed curve inventing
+    // values between daily totals, no gradient as decoration.
+    const line = points
+      .map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`)
+      .join(" ");
     const baseY = height - pad.b;
 
     const grid = [0.25, 0.5, 0.75]
@@ -486,20 +435,9 @@
       .join("");
 
     return `<svg class="chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml(aria)}" preserveAspectRatio="none">
-      <defs>
-        <linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="${C.green}" stop-opacity="0.38" />
-          <stop offset="55%" stop-color="${C.blue}" stop-opacity="0.12" />
-          <stop offset="100%" stop-color="${C.blue}" stop-opacity="0" />
-        </linearGradient>
-        <linearGradient id="${id}-line" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stop-color="${C.green}" />
-          <stop offset="100%" stop-color="${C.blue}" />
-        </linearGradient>
-      </defs>
       ${grid}
-      <path d="${line} L${points[points.length - 1].x.toFixed(1)},${baseY} L${points[0].x.toFixed(1)},${baseY} Z" fill="url(#${id})" />
-      <path class="area-line" d="${line}" fill="none" stroke="url(#${id}-line)" stroke-width="2" stroke-linecap="round" />
+      <path d="${line} L${points[points.length - 1].x.toFixed(1)},${baseY} L${points[0].x.toFixed(1)},${baseY} Z" fill="${C.green}" fill-opacity="0.08" />
+      <path class="area-line" d="${line}" fill="none" stroke="${C.green}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
       ${dots}
       ${labels}
     </svg>`;
@@ -654,7 +592,6 @@
     const barW = (innerW - gap * (rows.length - 1)) / rows.length;
     const baseY = height - pad.b;
     const avgY = pad.t + innerH - (avg / max) * innerH;
-    const id = nextGradient("weekday");
 
     const bars = rows
       .map((d, i) => {
@@ -663,38 +600,14 @@
         const x = pad.l + i * (barW + gap);
         const y = baseY - bh;
         const hot = count === max && count > 0;
-        return `<rect class="bar" style="--d:${i * 55}ms" x="${x.toFixed(
-          1
-        )}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(
-          1
-        )}" rx="4" fill="url(#${hot ? `${id}-hot` : id})"><title>${escapeHtml(
-          d.label
-        )}: ${count}</title></rect>
-        <text class="axis-label" x="${(x + barW / 2).toFixed(
-          1
-        )}" y="${height - 8}" text-anchor="middle">${escapeHtml(
-          String(d.label).slice(0, 1)
-        )}</text>`;
+        return `<rect class="bar" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" fill="${hot ? C.green : "#4b5563"}"><title>${escapeHtml(d.label)}: ${count}</title></rect>
+        <text class="axis-label" x="${(x + barW / 2).toFixed(1)}" y="${height - 8}" text-anchor="middle">${escapeHtml(String(d.label).slice(0, 1))}</text>`;
       })
       .join("");
 
     host.innerHTML = `<svg class="chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Contributions by weekday">
-      <defs>
-        <linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="${C.blue}" />
-          <stop offset="100%" stop-color="${C.blue}" stop-opacity="0.16" />
-        </linearGradient>
-        <linearGradient id="${id}-hot" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="${C.green}" />
-          <stop offset="100%" stop-color="${C.green}" stop-opacity="0.2" />
-        </linearGradient>
-      </defs>
-      <line class="grid-line" x1="${pad.l}" x2="${width - pad.r}" y1="${avgY.toFixed(
-        1
-      )}" y2="${avgY.toFixed(1)}" />
-      <text class="axis-label" x="${width - pad.r}" y="${(avgY - 5).toFixed(
-        1
-      )}" text-anchor="end">avg ${Math.round(avg)}</text>
+      <line class="grid-line" x1="${pad.l}" x2="${width - pad.r}" y1="${avgY.toFixed(1)}" y2="${avgY.toFixed(1)}" />
+      <text class="axis-label" x="${width - pad.r}" y="${(avgY - 6).toFixed(1)}" text-anchor="end">Average ${Math.round(avg)}</text>
       ${bars}
     </svg>`;
   }
@@ -709,17 +622,17 @@
       return;
     }
     const rows = [
-      { label: "Opened", value: opened, color: C.blue },
+      { label: "Opened", value: opened, color: "#6b7280" },
       { label: "Merged", value: Number(prs.merged) || 0, color: C.green },
-      { label: "Closed", value: Number(prs.closed) || 0, color: C.amber },
+      { label: "Closed", value: Number(prs.closed) || 0, color: "#3f4650" },
     ];
     const max = Math.max(...rows.map((r) => r.value), 1);
     const html = rows
-      .map((r, i) => {
+      .map((r) => {
         const width = Math.round((r.value / max) * 100);
         return `<div class="funnel-row">
           <span>${r.label}</span>
-          <div class="funnel-track"><span style="width:${width}%;background:linear-gradient(90deg,${r.color},${r.color}99);animation-delay:${i * 90}ms"></span></div>
+          <div class="funnel-track"><span style="width:${width}%;background:${r.color}"></span></div>
           <strong>${formatNum(r.value)}</strong>
         </div>`;
       })
@@ -779,7 +692,6 @@
     const gap = 16;
     const barW = (innerW - gap * (rows.length - 1)) / rows.length;
     const baseY = height - pad.b;
-    const id = nextGradient("month");
 
     const bars = rows
       .map((d, i) => {
@@ -787,35 +699,13 @@
         const bh = count ? Math.max(4, (count / max) * innerH) : 2;
         const x = pad.l + i * (barW + gap);
         const y = baseY - bh;
-        return `<rect class="bar" style="--d:${i * 70}ms" x="${x.toFixed(
-          1
-        )}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(
-          1
-        )}" rx="5" fill="url(#${id})"><title>${escapeHtml(
-          d.label || d.key
-        )}: ${count}</title></rect>
-        <text class="axis-label" x="${(x + barW / 2).toFixed(
-          1
-        )}" y="${(y - 7).toFixed(1)}" text-anchor="middle">${formatNum(
-          count
-        )}</text>
-        <text class="axis-label" x="${(x + barW / 2).toFixed(
-          1
-        )}" y="${height - 10}" text-anchor="middle">${escapeHtml(
-          String(d.label || d.key || "").slice(0, 3)
-        )}</text>`;
+        return `<rect class="bar" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" fill="${count === max && count > 0 ? C.green : "#4b5563"}"><title>${escapeHtml(d.label || d.key)}: ${count}</title></rect>
+        <text class="axis-label" x="${(x + barW / 2).toFixed(1)}" y="${(y - 7).toFixed(1)}" text-anchor="middle">${formatNum(count)}</text>
+        <text class="axis-label" x="${(x + barW / 2).toFixed(1)}" y="${height - 10}" text-anchor="middle">${escapeHtml(String(d.label || d.key || "").slice(0, 3))}</text>`;
       })
       .join("");
 
-    host.innerHTML = `<svg class="chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Monthly contributions">
-      <defs>
-        <linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="${C.green}" />
-          <stop offset="100%" stop-color="${C.blue}" stop-opacity="0.28" />
-        </linearGradient>
-      </defs>
-      ${bars}
-    </svg>`;
+    host.innerHTML = `<svg class="chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Monthly contributions">${bars}</svg>`;
   }
 
 

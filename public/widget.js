@@ -24,6 +24,42 @@
     statusLine.className = `status${isError ? " error" : ""}`;
   }
 
+  // The widget's own signature element: the same contribution calendar the
+  // dashboard uses, compressed into a 26-week pulse strip.
+  function renderPulse(days) {
+    const host = document.getElementById("widget-pulse");
+    const byDate = new Map();
+    for (const day of days || []) {
+      if (day && day.date) byDate.set(day.date, day);
+    }
+
+    const now = new Date();
+    const today = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+    );
+    const end = new Date(today);
+    end.setUTCDate(end.getUTCDate() + (6 - today.getUTCDay()));
+    const start = new Date(end);
+    start.setUTCDate(start.getUTCDate() - (26 * 7 - 1));
+
+    const cells = [];
+    for (let week = 0; week < 26; week += 1) {
+      for (let day = 0; day < 7; day += 1) {
+        const cursor = new Date(start);
+        cursor.setUTCDate(cursor.getUTCDate() + week * 7 + day);
+        const iso = cursor.toISOString().slice(0, 10);
+        const entry = byDate.get(iso);
+        const count = entry ? Number(entry.count) || 0 : 0;
+        let level = entry ? Number(entry.level) || 0 : 0;
+        if (!level && count > 0) level = count > 9 ? 4 : count > 5 ? 3 : count > 1 ? 2 : 1;
+        cells.push(
+          `<i class="l${Math.min(4, level)}" title="${iso}: ${count} contribution${count === 1 ? "" : "s"}"></i>`
+        );
+      }
+    }
+    host.innerHTML = cells.join("");
+  }
+
   async function refresh() {
     const clean = username.trim().replace(/^@/, "");
     if (!clean) {
@@ -36,10 +72,12 @@
       const rank = data.rank || {};
       const streak = data.streak || {};
       const recent = data.recent || {};
+      const calendar = data.calendar || [];
+      const total = calendar.reduce((sum, day) => sum + (Number(day.count) || 0), 0);
 
       document.getElementById("widget-level").textContent = rank.level || "—";
       document.getElementById("widget-score").textContent =
-        rank.score != null ? `${rank.score} / 100` : "— / 100";
+        rank.score != null ? rank.score.toFixed(2) : "—";
       document.getElementById("widget-streak").textContent =
         `${formatNumber(streak.currentStreak)}d`;
       document.getElementById("widget-today").textContent = formatNumber(
@@ -48,6 +86,9 @@
       document.getElementById("widget-commits").textContent = formatNumber(
         data.totalCommits
       );
+      document.getElementById("widget-total").textContent =
+        `${formatNumber(total)} contributions`;
+      renderPulse(calendar);
 
       username = data.login;
       input.value = data.login;
